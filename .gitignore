@@ -1,0 +1,10 @@
+# Ignore React production build
+frontend/build
+
+# Ignore pycache
+backend/__pycache__
+
+# Ignore auxillary files
+.idea
+.DS_Store
+roadmap.txt
