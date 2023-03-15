@@ -6,4 +6,5 @@ Jinja2==3.1.2
 MarkupSafe==2.1.2
 Werkzeug==2.2.3
 psycopg2==2.9.5
-Flask-SQLAlchemy==3.0.3
+flask-migrate==4.0.4
+flask-sqlalchemy==3.0.3
