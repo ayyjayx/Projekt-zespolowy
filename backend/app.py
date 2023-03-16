@@ -1,24 +1,23 @@
 from flask import Flask, request, flash, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+import sqlalchemy as db
+from sqlalchemy.orm import scoped_session, sessionmaker
+import psycopg2
+from models import Account
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:projekt1234@localhost:80/account'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+engine = db.create_engine('postgresql+psycopg2://postgres:projekt1234@database:5432/postgres')
+connection = engine.connect()
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db, compare_type=True)
-
-class Account(db.Model):
-    __tablename__='account'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(20))
-    username = db.Column(db.String(20))
-    password = db.Column(db.String(20))
+Session = sessionmaker(bind=engine)
+session = Session()
 
 @app.route('/')
 def main():
+    # test - bez POST request
+    # meta = db.MetaData()
+    # census = db.Table('account', meta, autoload_with=engine)
+    # return(census.columns.keys())
     return "szachy"
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -28,8 +27,8 @@ def register():
         password = request.form['password']
         email = request.form['email']
         user_account = Account(username=username, password=password, email=email)
-        db.session.add(user_account)
-        db.session.commit()
+        session.add(user_account)
+        session.commit()
         flash('Udana rejestracja')
         return redirect(url_for('main'))
     return 'no POST request :)'
