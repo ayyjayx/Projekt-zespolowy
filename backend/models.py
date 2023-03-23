@@ -1,12 +1,17 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column
-from sqlalchemy.types import Integer, String
+from flask_sqlalchemy import SQLAlchemy
+# from datetime import datetime
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class Account(Base):
-    __tablename__='account'
-    id = Column(Integer, primary_key=True)
-    email = Column(String(20))
-    username = Column(String(20))
-    password = Column(String(20))
+
+class account(db.Model):
+    __tablename__ = "account"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(20), nullable=False)
+    # created_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Account {self.id}, {self.username}>"
