@@ -1,12 +1,11 @@
-from flask import Flask
+from init import create_app
+from models import db
+from flask_migrate import Migrate
 
-app = Flask(__name__)
+app = create_app()
 
+db.init_app(app)
+migrate = Migrate(app, db)
 
-@app.route('/')
-def main():
-    return "szachy"
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0")
