@@ -1,18 +1,6 @@
 version: '3'
 
 services:
-  backend:
-    build: backend
-    command: [ "flask", "run", "--host=0.0.0.0" ]
-    volumes:
-      - ./backend:/backend
-    environment:
-      - FLASK_ENV=development
-      - FLASK_APP=app.py
-    ports:
-      - "5000:5000"
-    depends_on:
-      - database
 
   database:
     image: postgres:latest
@@ -28,6 +16,19 @@ services:
       - ./database:/var/lib/postgresql/data
       - ./sql/tables.sql:/docker-entrypoint-initdb.d/tables.sql
 
+  backend:
+    build: backend
+    command: [ "flask", "run", "--host=0.0.0.0" ]
+    volumes:
+      - ./backend:/backend
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+    
   frontend:
     build: frontend
     command: [ "npm", "start" ]
