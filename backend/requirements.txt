@@ -19,3 +19,4 @@ flake8==5.0.4
 pre-commit==2.21.0
 SQLAlchemy==2.0.6
 typing_extensions==4.5.0
+psycopg2==2.9.5
