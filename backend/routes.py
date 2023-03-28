@@ -1,55 +1,76 @@
-from flask import jsonify, request
-from models import db, account
+from flask import jsonify, request, session, render_template, url_for, redirect, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from forms import LoginForm, RegistrationForm
+from models import db, Account
 from sqlalchemy import exc
-# from flask_login import LoginManager, login_user
-# from datetime import datetime
+from datetime import datetime
 
 
 def init_routes(app):
 
-    @app.route("/api", methods=["GET"])
-    def get_api_base_url():
-        return jsonify({
-            "msg": "todos api is up",
-            "success": True,
-            "data": None
-        }), 200
+    @app.route('/', methods=['GET'])
+    def main():
+        if session.get('logged_in'):
+            return redirect(url_for('home'))
+        else:
+            return redirect(url_for('index'))
+        
+    @app.route('/home', methods=['GET'])
+    def home():
+        return render_template('home.html')
+
+    @app.route('/index', methods=['GET'])
+    def index():
+        return render_template('index.html')
 
     @app.route("/register", methods=["POST"])
     def register():
-        username = request.json.get('username')
-        email = request.json.get('email')
-        password = request.json.get('password')
-
-        if username and email and password:
-            try:
-                new_user = account(
-                    username=username,
-                    email=email,
-                    password=password
-                )
-                db.session.add(new_user)
-                db.session.commit()
-                return jsonify({'success': True}), 201
-            except exc.IntegrityError:
-                return jsonify({'error':
-                                'użytkownik/email są już używane'}), 400
-        else:
-            return jsonify({'error': 'uzupełnij wszystkie pola'}), 400
+        if request.method == 'POST':
+            form = RegistrationForm()
+            if form.validate_on_submit():
+                username = form.username.data
+                email = form.email.data
+                password = form.password.data
+                hashed = generate_password_hash(password, method='sha256')
+                    try:
+                        new_user = Account(
+                            username=username,
+                            email=email,
+                            password=hashed,
+                            created_on=datetime.utcnow())
+                        db.session.add(new_user)
+                        db.session.commit()
+                    except exc.IntegrityError:
+                        flash('Username/Email already in use!', 'error')
+                        return redirect(url_for('register'))
+                    session['logged_in'] = True
+                    flash('Successful Registration :)', 'success')
+                    return redirect(url_for('/'))
+            else:
+                flash('Fill missing fields!', 'error')
+                return redirect(url_for('register'))
+        else: return render_template('register.html', form=form)
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        # login_manager = LoginManager(app)
-        username = request.json.get('username')
-        password = request.json.get('password')
-
-        acc = account.query.filter_by(username=username).first()
-
-        if acc:
-            if acc.password == password:
-                # login_user(account)
-                return jsonify({'message': 'Udane logowanie'}), 200
+        form = LoginForm()
+        if form.validate_on_submit():
+            account = Account.query.get(form.username.data)
+            if account:
+                if check_password_hash(account.password, form.password.data):
+                    session['logged_in'] = True
+                    flash('Successful Login :)', 'success')
+                    return redirect(url_for('/')) 
+                else:
+                    flash('Wrong Password!', 'error')
+                    return redirect(url_for('login'))
             else:
-                return jsonify({'error': 'Złe hasło'}), 401
-        else:
-            return jsonify({'error': 'Nie znaleziono użytkownika'}), 401
+                flash('Account does not exist!', 'error')
+                return redirect(url_for('login'))
+        return render_template('login.html', form=form)
+        
+    @app.route('/logout', methods=['GET', 'POST'])
+    def logout():
+        session['logged_in'] = False
+        flash('Successfuly Logged out', 'success')
+        return redirect(url_for('/'))
