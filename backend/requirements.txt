@@ -20,3 +20,6 @@ pre-commit==2.21.0
 SQLAlchemy==2.0.6
 typing_extensions==4.5.0
 psycopg2==2.9.5
+WTForms==3.0.1
+flask-wtf==1.1.1
+
