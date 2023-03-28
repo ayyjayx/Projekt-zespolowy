@@ -10,4 +10,4 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'tu-baza-danych-do-testów'
+    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database-test:5432/postgres"
