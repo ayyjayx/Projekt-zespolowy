@@ -7,13 +7,13 @@ from datetime import datetime
 
 def init_routes(app):
 
-    @app.route('/', methods=['GET'])
-    def main():
+    @app.route('/start', methods=['GET'])
+    def start():
         if session.get('logged_in'):
             return redirect(url_for('home'))
         else:
             return redirect(url_for('index'))
-        
+
     @app.route('/home', methods=['GET'])
     def home():
         return render_template('home.html')
