@@ -8,3 +8,10 @@ backend/__pycache__
 .idea
 .DS_Store
 roadmap.txt
+
+# Ignore database files
+database
+database-test
+
+# Ignore python venv
+venv
