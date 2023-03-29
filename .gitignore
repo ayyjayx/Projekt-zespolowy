@@ -4,6 +4,7 @@ frontend/build
 # Ignore pycache
 backend/__pycache__
 backend/migrations/__pycache__
+backend/migrations/__pycache__
 
 # Ignore auxillary files
 .idea

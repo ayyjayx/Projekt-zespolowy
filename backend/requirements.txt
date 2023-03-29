@@ -12,10 +12,9 @@ Jinja2==3.1.2
 Mako==1.2.4
 MarkupSafe==2.1.2
 psycopg2-binary==2.9.3
-PyJWT==2.6.0
-Werkzeug==2.2.3
+sqlalchemy==2.0.6
+psycopg2==2.9.5
 WTForms==3.0.1
 flake8==5.0.4
 pre-commit==2.21.0
-SQLAlchemy==2.0.6
-typing_extensions==4.5.0
+PyJWT==1.4.2
