@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
-# from datetime import datetime
+from datetime import datetime
+import jwt
+from config import Config
 
 db = SQLAlchemy()
 
@@ -15,6 +17,30 @@ class Account(db.Model):
     created_on = db.Column(postgresql.TIMESTAMP(), autoincrement=False)
     last_login = db.Column(postgresql.TIMESTAMP(), autoincrement=False,
                            nullable=True)
+    
+    def encode_auth_token(self, id):
+        try:
+            payload = {
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+                'iat': datetime.datetime.utcnow(),
+                'sub': id
+            }
+            return jwt.encode(
+                payload,
+                Config.get('SECRET_KEY'),
+                algorithm='HS256'
+            )
+        except Exception as e:
+            return e
+    
+    def decode_auth_token(auth_token):
+        try:
+            payload = jwt.decode(auth_token, Config.get('SECRET_KEY'))
+            return payload['sub']
+        except jwt.ExpiredSignatureError:
+            return 'Signature expired.'
+        except jwt.InvalidTokenError:
+            return 'Invalid token.'
 
 
 class Player(db.Model):

@@ -1,6 +1,5 @@
-from flask import request, session, render_template, url_for, redirect, flash
+from flask import request, session, jsonify, render_template, url_for, redirect, flash, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
-from forms import LoginForm, RegistrationForm
 from models import db, Account
 from sqlalchemy import exc
 from datetime import datetime
@@ -25,70 +24,67 @@ def init_routes(app):
 
     @app.route("/register", methods=['GET', 'POST'])
     def register():
-        form = RegistrationForm()
-        if form.validate_on_submit():
-            username = form.username.data
-            email = form.email.data
-            password = form.password.data
-            hashed = generate_password_hash(password)
+        post_data = request.get_json()
+        new_account = Account.query.filter_by(username=post_data.get('username')).first()
+        if not new_account:
             try:
-                new_user = Account(
-                    username=username,
-                    email=email,
-                    password=hashed,
-                    created_on=datetime.utcnow())
-                db.session.add(new_user)
+                new_account = Account(
+                    username=post_data.get('username'),
+                    email=post_data.get('email'),
+                    password=generate_password_hash(post_data.get('password'))
+                )
+                db.session.add(new_account)
                 db.session.commit()
-            except exc.IntegrityError:
-                flash('Username/Email already in use!', 'error')
-                return redirect(url_for('register'))
-            session['logged_in'] = True
-            flash('Successful Registration :)', 'success')
-            return redirect(url_for('start'))
-        return render_template('register.html', form=form)
+                auth_token = new_account.encode_auth_token(new_account.id)
+                responseObject = {
+                    'status': 'success',
+                    'message': 'Successfully registered.',
+                    'auth_token': auth_token.decode()
+                }
+                return make_response(jsonify(responseObject)), 201
+            except Exception as e:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'Try again.'
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+            responseObject = {
+                'status': 'fail',
+                'message': 'User already exists.',
+            }
+            return make_response(jsonify(responseObject)), 202
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        form = LoginForm()
-        if form.validate_on_submit():
-            account = Account.query.filter_by(username=form.username.data).first()
-            if account:
-                if check_password_hash(account.password, form.password.data):
-                    session['logged_in'] = True
-                    flash('Successful Login :)', 'success')
-                    return redirect(url_for('start'))
-                else:
-                    flash('Wrong Password!', 'error')
-                    return redirect(url_for('login'))
+        post_data = request.get_json()
+        try:
+            account = Account.query.filter_by(username=post_data.get('username')).first()
+            if check_password_hash(account.password, post_data.get('password')):
+                auth_token = account.encode_auth_token(account.id)
+                if auth_token:
+                    responseObject = {
+                        'status': 'success',
+                        'message': 'Successfully logged in.',
+                        'auth_token': auth_token.decode()
+                    }
+                    return make_response(jsonify(responseObject)), 200
             else:
-                flash('Account does not exist!', 'error')
-                return redirect(url_for('login'))
-        return render_template('login.html', form=form)
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'User does not exist.'
+                }
+                return make_response(jsonify(responseObject)), 404
+        except Exception as e:
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'message': 'Try again.'
+            }
+            return make_response(jsonify(responseObject)), 500  
 
     @app.route('/logout', methods=['GET', 'POST'])
     def logout():
-        session['logged_in'] = False
-        flash('Successfully Logged out', 'success')
+        # logout
         return redirect(url_for('start'))
 
-    @app.route('/admin/create', methods=['GET', 'POST'])
-    def create():
-        if request.method == 'GET':
-            return render_template('create.html')
-        if request.method == 'POST':
-            form = RegistrationForm()
-            username = form.username.data
-            email = form.email.data
-            password = form.password.data
-            hashed = generate_password_hash(password)
-            try:
-                new_user = Account(
-                    username=username,
-                    email=email,
-                    password=hashed,
-                    created_on=datetime.utcnow())
-                db.session.add(new_user)
-                db.session.commit()
-            except exc.IntegrityError:
-                flash('Username/Email already in use!', 'error')
-                return redirect(url_for('/admin/create'))
