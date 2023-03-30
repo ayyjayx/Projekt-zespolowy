@@ -12,7 +12,7 @@ Jinja2==3.1.2
 Mako==1.2.4
 MarkupSafe==2.1.2
 psycopg2-binary==2.9.3
-Werkzeug==2.2.3
+sqlalchemy==2.0.6
 WTForms==3.0.1
 flake8==5.0.4
 SQLAlchemy==2.0.6
