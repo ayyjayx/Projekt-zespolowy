@@ -1,55 +1,90 @@
-from flask import jsonify, request
-from models import db, account
+from flask import request, session, jsonify, render_template, url_for, redirect, flash, make_response
+from werkzeug.security import generate_password_hash, check_password_hash
+from models import db, Account
 from sqlalchemy import exc
-# from flask_login import LoginManager, login_user
-# from datetime import datetime
+from datetime import datetime
 
 
 def init_routes(app):
 
-    @app.route("/api", methods=["GET"])
-    def get_api_base_url():
-        return jsonify({
-            "msg": "todos api is up",
-            "success": True,
-            "data": None
-        }), 200
-
-    @app.route("/register", methods=["POST"])
-    def register():
-        username = request.json.get('username')
-        email = request.json.get('email')
-        password = request.json.get('password')
-
-        if username and email and password:
-            try:
-                new_user = account(
-                    username=username,
-                    email=email,
-                    password=password
-                )
-                db.session.add(new_user)
-                db.session.commit()
-                return jsonify({'success': True}), 201
-            except exc.IntegrityError:
-                return jsonify({'error':
-                                'użytkownik/email są już używane'}), 400
+    @app.route('/start', methods=['GET'])
+    def start():
+        if session.get('logged_in'):
+            return redirect(url_for('home'))
         else:
-            return jsonify({'error': 'uzupełnij wszystkie pola'}), 400
+            return redirect(url_for('index'))
+
+    @app.route('/home', methods=['GET'])
+    def home():
+        return render_template('home.html')
+
+    @app.route('/index', methods=['GET'])
+    def index():
+        return render_template('index.html')
+
+    @app.route("/register", methods=['GET', 'POST'])
+    def register():
+        post_data = request.get_json()
+        new_account = Account.query.filter_by(username=post_data.get('username')).first()
+        if not new_account:
+            try:
+                new_account = Account(
+                    username=post_data.get('username'),
+                    email=post_data.get('email'),
+                    password=generate_password_hash(post_data.get('password'))
+                )
+                db.session.add(new_account)
+                db.session.commit()
+                auth_token = new_account.encode_auth_token(new_account.id)
+                responseObject = {
+                    'status': 'success',
+                    'message': 'Successfully registered.',
+                    'auth_token': auth_token.decode()
+                }
+                return make_response(jsonify(responseObject)), 201
+            except Exception as e:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'Try again.'
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+            responseObject = {
+                'status': 'fail',
+                'message': 'User already exists.',
+            }
+            return make_response(jsonify(responseObject)), 202
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        # login_manager = LoginManager(app)
-        username = request.json.get('username')
-        password = request.json.get('password')
-
-        acc = account.query.filter_by(username=username).first()
-
-        if acc:
-            if acc.password == password:
-                # login_user(account)
-                return jsonify({'message': 'Udane logowanie'}), 200
+        post_data = request.get_json()
+        try:
+            account = Account.query.filter_by(username=post_data.get('username')).first()
+            if check_password_hash(account.password, post_data.get('password')):
+                auth_token = account.encode_auth_token(account.id)
+                if auth_token:
+                    responseObject = {
+                        'status': 'success',
+                        'message': 'Successfully logged in.',
+                        'auth_token': auth_token.decode()
+                    }
+                    return make_response(jsonify(responseObject)), 200
             else:
-                return jsonify({'error': 'Złe hasło'}), 401
-        else:
-            return jsonify({'error': 'Nie znaleziono użytkownika'}), 401
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'User does not exist.'
+                }
+                return make_response(jsonify(responseObject)), 404
+        except Exception as e:
+            print(e)
+            responseObject = {
+                'status': 'fail',
+                'message': 'Try again.'
+            }
+            return make_response(jsonify(responseObject)), 500  
+
+    @app.route('/logout', methods=['GET', 'POST'])
+    def logout():
+        # logout
+        return redirect(url_for('start'))
+

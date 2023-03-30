@@ -3,11 +3,14 @@ frontend/build
 
 # Ignore pycache
 backend/__pycache__
+backend/migrations/__pycache__
+backend/migrations/__pycache__
 
 # Ignore auxillary files
 .idea
 .DS_Store
 roadmap.txt
+backend/migrations/versions
 
 # Ignore database files
 database
