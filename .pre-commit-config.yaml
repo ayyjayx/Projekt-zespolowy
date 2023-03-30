@@ -1,11 +1,25 @@
 repos:
+
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 5.0.4
     hooks:
     - id: flake8
       exclude: ^(database/|backend/migrations/|sql/)
+
 -   repo: https://github.com/psf/black
-    rev: stable
+    rev: 22.3.0
     hooks:
     - id: black
+      exclude: ^(database/|backend/migrations/|sql/)
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.11.5
+    hooks:
+    - id: isort
+      exclude: ^(database/|backend/migrations/|sql/)
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.1.1
+  hooks:
+    - id: mypy
       exclude: ^(database/|backend/migrations/|sql/)
