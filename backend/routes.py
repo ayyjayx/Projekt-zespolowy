@@ -1,90 +1,73 @@
-from flask import request, session, jsonify, render_template, url_for, redirect, flash, make_response
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, Account
+from datetime import datetime, timedelta
+import app
+import jwt
+from config import Config
+from flask import (flash, jsonify, make_response, redirect, render_template,
+                   request, session, url_for)
+from models import Account, db, token_required
 from sqlalchemy import exc
-from datetime import datetime
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 def init_routes(app):
-
-    @app.route('/start', methods=['GET'])
+    @app.route("/start", methods=["GET"])
     def start():
-        if session.get('logged_in'):
-            return redirect(url_for('home'))
+        if session.get("logged_in"):
+            return redirect(url_for("home"))
         else:
-            return redirect(url_for('index'))
+            return redirect(url_for("index"))
 
-    @app.route('/home', methods=['GET'])
+    @app.route("/home", methods=["GET"])
     def home():
-        return render_template('home.html')
+        return render_template("home.html")
 
-    @app.route('/index', methods=['GET'])
+    @app.route("/index", methods=["GET"])
     def index():
-        return render_template('index.html')
+        return render_template("index.html")
 
-    @app.route("/register", methods=['GET', 'POST'])
+    @app.route("/register", methods=["GET", "POST"])
     def register():
-        post_data = request.get_json()
-        new_account = Account.query.filter_by(username=post_data.get('username')).first()
+        data = request.form
+        username, email = data.get("username"), data.get("email")
+        password = data.get("password")
+
+        new_account = Account.query.filter_by(email=email).first()
         if not new_account:
-            try:
-                new_account = Account(
-                    username=post_data.get('username'),
-                    email=post_data.get('email'),
-                    password=generate_password_hash(post_data.get('password'))
-                )
-                db.session.add(new_account)
-                db.session.commit()
-                auth_token = new_account.encode_auth_token(new_account.id)
-                responseObject = {
-                    'status': 'success',
-                    'message': 'Successfully registered.',
-                    'auth_token': auth_token.decode()
-                }
-                return make_response(jsonify(responseObject)), 201
-            except Exception as e:
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'Try again.'
-                }
-                return make_response(jsonify(responseObject)), 401
+            new_account = Account(
+                username=username,
+                email=email,
+                password=generate_password_hash(password),
+                admin=False,
+            )
+            db.session.add(new_account)
+            db.session.commit()
+            return make_response("Successfully registered.", 201)
         else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'User already exists.',
-            }
-            return make_response(jsonify(responseObject)), 202
+            return make_response("User already exists.", 202)
 
-    @app.route('/login', methods=['GET', 'POST'])
+    @app.route("/login", methods=["GET", "POST"])
     def login():
-        post_data = request.get_json()
-        try:
-            account = Account.query.filter_by(username=post_data.get('username')).first()
-            if check_password_hash(account.password, post_data.get('password')):
-                auth_token = account.encode_auth_token(account.id)
-                if auth_token:
-                    responseObject = {
-                        'status': 'success',
-                        'message': 'Successfully logged in.',
-                        'auth_token': auth_token.decode()
-                    }
-                    return make_response(jsonify(responseObject)), 200
-            else:
-                responseObject = {
-                    'status': 'fail',
-                    'message': 'User does not exist.'
-                }
-                return make_response(jsonify(responseObject)), 404
-        except Exception as e:
-            print(e)
-            responseObject = {
-                'status': 'fail',
-                'message': 'Try again.'
-            }
-            return make_response(jsonify(responseObject)), 500  
+        auth = request.form
+        if not auth or not auth.get("username") or not auth.get("password"):
+            responseObject = {"status": "fail", "message": "Missing data!"}
+            return make_response(jsonify(responseObject), 401)
 
-    @app.route('/logout', methods=['GET', 'POST'])
+        account = Account.query.filter_by(username=auth.get("username")).first()
+        if not account:
+            responseObject = {"status": "fail", "message": "User does not exist!"}
+            return make_response(jsonify(responseObject), 401)
+
+        if check_password_hash(account.password, auth.get("password")):
+            token = jwt.encode(
+                {"id": account.id, "exp": datetime.utcnow() + timedelta(minutes=30)},
+                app.config["SECRET_KEY"],
+            )
+            return make_response(jsonify({"token": token}), 201)
+
+        responseObject = {"status": "fail", "message": "Incorrect Password!"}
+        return make_response(jsonify(responseObject), 403)
+
+    @app.route("/logout", methods=["GET", "POST"])
     def logout():
         # logout
-        return redirect(url_for('start'))
-
+        return redirect(url_for("start"))
