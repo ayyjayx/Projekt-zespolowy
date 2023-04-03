@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-
 import app
 import jwt
 from config import Config
@@ -28,7 +27,7 @@ def init_routes(app):
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
-        data = request.get_json()
+        data = request.form
         username, email = data.get("username"), data.get("email")
         password = data.get("password")
 
@@ -38,6 +37,7 @@ def init_routes(app):
                 username=username,
                 email=email,
                 password=generate_password_hash(password),
+                admin=False,
             )
             db.session.add(new_account)
             db.session.commit()
@@ -47,7 +47,7 @@ def init_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        auth = request.get_json()
+        auth = request.form
         if not auth or not auth.get("username") or not auth.get("password"):
             responseObject = {"status": "fail", "message": "Missing data!"}
             return make_response(jsonify(responseObject), 401)
@@ -62,7 +62,6 @@ def init_routes(app):
                 {"id": account.id, "exp": datetime.utcnow() + timedelta(minutes=30)},
                 app.config["SECRET_KEY"],
             )
-
             return make_response(jsonify({"token": token}), 201)
 
         responseObject = {"status": "fail", "message": "Incorrect Password!"}
