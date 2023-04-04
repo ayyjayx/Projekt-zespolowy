@@ -1,11 +1,9 @@
-from functools import wraps
-
-import app
-import jwt
-from config import Config
-from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
+from functools import wraps
+from flask import request, jsonify
+import jwt
+import app
 
 db = SQLAlchemy()
 
@@ -19,7 +17,7 @@ class Account(db.Model):
     password = db.Column(db.VARCHAR(256), nullable=False)
     created_on = db.Column(postgresql.TIMESTAMP(), autoincrement=False)
     last_login = db.Column(postgresql.TIMESTAMP(), autoincrement=False, nullable=True)
-    admin = db.Column(db.Boolean)
+    admin = db.Column(db.Boolean, default=False)
 
 
 class Player(db.Model):
@@ -66,7 +64,6 @@ class Game(db.Model):
         "Account", foreign_keys="Game.player_two_id"
     )
 
-
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -81,7 +78,32 @@ def token_required(f):
         try:
             # decoding the payload to fetch the stored details
             data = jwt.decode(token, app.config["SECRET_KEY"])
-            current_user = Account.query.filter_by(public_id=data["id"]).first()
+            current_user = Account.query.filter_by(id=data["id"]).first()
+        except:
+            return jsonify({"message": "Token is invalid !!"}), 401
+        # returns the current logged in users context to the routes
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
+
+def admin_token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # jwt is passed in the request header
+        if "x-access-token" in request.headers:
+            token = request.headers["x-access-token"]
+        # return 401 if token is not passed
+        if not token:
+            return jsonify({"message": "Token is missing !!"}), 401
+        
+        admin = token.get('admin')
+
+        try:
+            # decoding the payload to fetch the stored details
+            data = jwt.decode(token, app.config["SECRET_KEY"])
+            current_user = Account.query.filter_by(id=data["id"]).first()
         except:
             return jsonify({"message": "Token is invalid !!"}), 401
         # returns the current logged in users context to the routes
