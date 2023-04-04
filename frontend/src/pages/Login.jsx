@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
-import jwt_decode from 'jwt-decode';
 
 
 export const setAuthToken = token => {
