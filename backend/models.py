@@ -49,7 +49,7 @@ class Account(db.Model):
 
     def check_jwt(self):
         return self.jwt_active
-
+    
     def set_jwt(self, set_status):
         self.jwt_active = set_status
 

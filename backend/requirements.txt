@@ -24,4 +24,3 @@ Six==1.16.0
 typing_extensions==4.5.0
 WTForms==3.0.1
 Werkzeug==2.2.3
-
