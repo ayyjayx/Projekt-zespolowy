@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
 import './style.css'
+import axios from 'axios';
 
 function Registration() {
     const [username, setUsername] = useState('');

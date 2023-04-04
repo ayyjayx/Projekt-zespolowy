@@ -5,6 +5,7 @@ from flask import (jsonify, make_response, redirect, render_template,
                    request, session, url_for)
 from models import Account, db, token_required, admin_token_required
 from werkzeug.security import check_password_hash, generate_password_hash
+# from flask_jwt_extended import decode_token, get_jwt, jwt_required
 
 def init_routes(app):
     @app.route("/api", methods=["GET", "POST"])
@@ -15,6 +16,11 @@ def init_routes(app):
     @app.route("/index", methods=["GET"])
     def index():
         return render_template("index.html")
+
+    # @app.route('/get-username')
+    # @token_required
+    # def get_username(current_user):
+    #     return jsonify({"username": current_user.username})
 
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
@@ -86,4 +92,4 @@ def init_routes(app):
     @app.route("/admin/accounts", methods=["GET", "POST"])
     @admin_token_required
     def admin():
-        return ""
+        return jsonify({"admin": 'admins page'})
