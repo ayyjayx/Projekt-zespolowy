@@ -5,6 +5,7 @@ from flask import (jsonify, make_response, redirect, render_template,
                    request, session, url_for)
 from models import Account, db, token_required, admin_token_required
 from werkzeug.security import check_password_hash, generate_password_hash
+# from flask_jwt_extended import decode_token, get_jwt, jwt_required
 
 def init_routes(app):
     @app.route("/api", methods=["GET", "POST"])
@@ -16,6 +17,11 @@ def init_routes(app):
     def index():
         return render_template("index.html")
 
+    # @app.route('/get-username')
+    # @token_required
+    # def get_username(current_user):
+    #     return jsonify({"username": current_user.username})
+
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
         if request.method == 'POST':
@@ -23,42 +29,49 @@ def init_routes(app):
             username = data.get("username")
             email = data.get("email")
             password = data.get("password")
+            passwordRepeat = data.get("passwordRepeat")
 
-            account = Account.query.filter_by(email=email).first()
-            if not account:
-                new_account = Account(
-                    username=username,
-                    email=email,
-                    password=generate_password_hash(password),
-                )
-                db.session.add(new_account)
-                db.session.commit()
-                return make_response("Successfully registered.", 201)
-            else:
-                return make_response("User already exists.", 202)
-        else: return make_response("Use POST", 300)
+            if password == passwordRepeat:
+                account = Account.query.filter_by(email=email).first()
+                if not account:
+                    new_account = Account(
+                        username=username,
+                        email=email,
+                        password=generate_password_hash(password),
+                    )
+                    db.session.add(new_account)
+                    db.session.commit()
+                    return make_response("Successfully registered.", 201)
+                else:
+                    return make_response("User already exists.", 202)
+            else: return make_response("Passwords do not match", 202)
+        else: return make_response("Use POST", 200)
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        auth = request.form
-        if not auth or not auth.get("username") or not auth.get("password"):
-            responseObject = {"status": "fail", "message": "Missing data!"}
-            return make_response(jsonify(responseObject), 401)
+        if request.method == 'POST':
+            data = request.get_json()
+            username = data.get("username")
+            password = data.get("password")
+            if not username or not password:
+                responseObject = {"status": "fail", "message": "Missing data!"}
+                return make_response(jsonify(responseObject), 401)
 
-        account = Account.query.filter_by(username=auth.get("username")).first()
-        if not account:
-            responseObject = {"status": "fail", "message": "User does not exist!"}
-            return make_response(jsonify(responseObject), 401)
+            account = Account.query.filter_by(username=username).first()
+            if not account:
+                responseObject = {"status": "fail", "message": "User does not exist!"}
+                return make_response(jsonify(responseObject), 401)
 
-        if check_password_hash(account.password, auth.get("password")):
-            token = jwt.encode(
-                {"id": account.id, "exp": datetime.utcnow() + timedelta(minutes=30)},
-                app.config["SECRET_KEY"],
-            )
-            return make_response(jsonify({"token": token}), 201)
+            if check_password_hash(account.password, password):
+                token = jwt.encode(
+                    {"id": account.id, "username": account.username, "exp": datetime.utcnow() + timedelta(minutes=30)},
+                    app.config["SECRET_KEY"],
+                )
+                return jsonify({"token": token})
 
-        responseObject = {"status": "fail", "message": "Incorrect Password!"}
-        return make_response(jsonify(responseObject), 403)
+            responseObject = {"status": "fail", "message": "Incorrect Password!"}
+            return make_response(jsonify(responseObject), 403)
+        else: return make_response("Use POST", 200)
 
     @app.route("/logout", methods=["GET", "POST"])
     def logout():
@@ -68,4 +81,4 @@ def init_routes(app):
     @app.route("/admin/accounts", methods=["GET", "POST"])
     @admin_token_required
     def admin():
-        return ""
+        return jsonify({"admin": 'admins page'})
