@@ -1,25 +1,16 @@
 from datetime import datetime, timedelta
-import app
 import jwt
 from config import Config
-from flask import (flash, jsonify, make_response, redirect, render_template,
+from flask import (jsonify, make_response, redirect, render_template,
                    request, session, url_for)
-from models import Account, db, token_required
-from sqlalchemy import exc
+from models import Account, db, token_required, admin_token_required
 from werkzeug.security import check_password_hash, generate_password_hash
 
-
 def init_routes(app):
-    @app.route("/start", methods=["GET"])
-    def start():
-        if session.get("logged_in"):
-            return redirect(url_for("home"))
-        else:
-            return redirect(url_for("index"))
-
-    @app.route("/home", methods=["GET"])
-    def home():
-        return render_template("home.html")
+    @app.route("/api", methods=["GET", "POST"])
+    def api():
+        data = request.get_data()
+        return jsonify(data)
 
     @app.route("/index", methods=["GET"])
     def index():
@@ -91,3 +82,8 @@ def init_routes(app):
     def logout():
         # logout
         return redirect(url_for("start"))
+    
+    @app.route("/admin/accounts", methods=["GET", "POST"])
+    @admin_token_required
+    def admin():
+        return ""
