@@ -4,6 +4,7 @@ from functools import wraps
 from flask import request, jsonify
 import jwt
 import app
+from config import Config
 
 db = SQLAlchemy()
 
@@ -77,13 +78,13 @@ def token_required(f):
 
         try:
             # decoding the payload to fetch the stored details
-            data = jwt.decode(token, app.config["SECRET_KEY"])
+            data = jwt.decode(token, Config.SECRET_KEY)
             current_user = Account.query.filter_by(id=data["id"]).first()
         except:
             return jsonify({"message": "Token is invalid !!"}), 401
         # returns the current logged in users context to the routes
         current_user.username = data["username"]
-        
+
         return f(current_user, *args, **kwargs)
 
     return decorated
@@ -99,15 +100,22 @@ def admin_token_required(f):
         # return 401 if token is not passed
         if not token:
             return jsonify({"message": "Token is missing !!"}), 401
-        
-        admin = token.get('admin')
 
         try:
             # decoding the payload to fetch the stored details
-            data = jwt.decode(token, app.config["SECRET_KEY"])
+            data = jwt.decode(token, Config.SECRET_KEY)
+            admin = data.get("admin")
+        except jwt.exceptions.InvalidTokenError:
+            return jsonify({"message": "Token is invalid !!"}), 401
+        
+        if not admin:
+            return jsonify({"message": "Admin token is missing !!"}), 401
+        
+        try:
             current_user = Account.query.filter_by(id=data["id"]).first()
         except:
-            return jsonify({"message": "Token is invalid !!"}), 401
+            return jsonify({"message": "Account not found !!"}), 404
+        
         # returns the current logged in users context to the routes
         return f(current_user, *args, **kwargs)
 
