@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
+import axios from 'axios';
 
 function Registration() {
     const [username, setUsername] = useState('');
@@ -11,6 +12,17 @@ function Registration() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const registerPayload = {
+            username: username,
+            email: email,
+            password: password,
+            passwordRepeat: passwordRepeat,
+        }
+
+        axios.post("http://localhost:5000/registration", registerPayload)
+        .then((response) =>
+                console.log(response.data.token))
+        .catch((error) => console.log(error));
     }
 
     return (

@@ -82,6 +82,8 @@ def token_required(f):
         except:
             return jsonify({"message": "Token is invalid !!"}), 401
         # returns the current logged in users context to the routes
+        current_user.username = data["username"]
+        
         return f(current_user, *args, **kwargs)
 
     return decorated

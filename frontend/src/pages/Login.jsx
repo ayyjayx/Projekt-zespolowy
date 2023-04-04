@@ -15,13 +15,14 @@ function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSubmit = () => {
+    const handleSubmit = (e) => {
+        e.preventDefault();
         const loginPayload = {
-            username: 'eve.holt@reqres.in',
-            password: 'cityslicka',
+            username: username,
+            password: password,
         }
 
-        axios.post("https://reqres.in/api/login", loginPayload)
+        axios.post("http://localhost:5000/login", loginPayload)
             .then(response => {
                 //get token from response
                 const token = response.data.token;
@@ -31,12 +32,14 @@ function Login() {
 
                 //set token to axios common header
                 setAuthToken(token);
+                
 
                 //redirect user to home page
                 window.location.href = '/'
             })
             .catch(err => console.log(err));
-    };
+    }
+
     return (
         <><header className="App-header">
             szaszki.pl
