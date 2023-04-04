@@ -5,7 +5,7 @@ from flask import (jsonify, make_response, redirect, render_template,
                    request, session, url_for)
 from models import Account, db, token_required, admin_token_required
 from werkzeug.security import check_password_hash, generate_password_hash
-# from flask_jwt_extended import decode_token, get_jwt, jwt_required
+from flask_jwt_extended import current_user, get_jwt, jwt_required, get_jwt_identity
 
 def init_routes(app):
     @app.route("/api", methods=["GET", "POST"])
@@ -17,11 +17,6 @@ def init_routes(app):
     def index():
         return render_template("index.html")
 
-    # @app.route('/get-username')
-    # @token_required
-    # def get_username(current_user):
-    #     return jsonify({"username": current_user.username})
-
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
         if request.method == 'POST':
@@ -31,6 +26,10 @@ def init_routes(app):
             password = data.get("password")
             passwordRepeat = data.get("passwordRepeat")
 
+            if not username or not password or not email or not passwordRepeat:
+                responseObject = {"status": "fail", "message": "Missing data!"}
+                return make_response(jsonify(responseObject), 401)
+                
             if password == passwordRepeat:
                 account = Account.query.filter_by(email=email).first()
                 if not account:
@@ -64,10 +63,11 @@ def init_routes(app):
 
             if check_password_hash(account.password, password):
                 token = jwt.encode(
-                    {"id": account.id, "username": account.username, "exp": datetime.utcnow() + timedelta(minutes=30)},
+                    {"id": account.id, "username": account.username,"admin": account.admin,
+                     "exp": datetime.utcnow() + timedelta(minutes=30)},
                     app.config["SECRET_KEY"],
                 )
-                return jsonify({"token": token})
+                return make_response(jsonify({"token": token}), 300)
 
             responseObject = {"status": "fail", "message": "Incorrect Password!"}
             return make_response(jsonify(responseObject), 403)
@@ -78,7 +78,18 @@ def init_routes(app):
         # logout
         return redirect(url_for("start"))
     
+    @app.route("/api/account")
+    @jwt_required()
+    def get_account():
+        current_user_id = get_jwt_identity()
+        user = Account.query.filter_by(id=current_user_id).first()
+        return jsonify({'id': user.id, 'username': user.username, 'admin': user.admin})
+    
     @app.route("/admin/accounts", methods=["GET", "POST"])
     @admin_token_required
     def admin():
-        return jsonify({"admin": 'admins page'})
+        token = None
+        if "Authorization" in request.headers:
+            token = request.headers["Authorization"]
+        if not token:
+            return jsonify({"error": "Missing token!"}), 401
