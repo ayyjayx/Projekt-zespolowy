@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  database:
+    image: postgres:latest
+    container_name: database
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=projekt1234
+      - POSTGRES_DB=postgres
+    ports:
+      - '80:5432'
+    volumes:
+      - ./database:/var/lib/postgresql/data
+      - ./sql/tables.sql:/docker-entrypoint-initdb.d/tables.sql
+
+  database-test:
+    image: postgres:latest
+    container_name: database-test
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=projekt1234
+      - POSTGRES_DB=postgres
+    ports:
+      - '90:5432'
+    volumes:
+      - ./database-test:/var/lib/postgresql/data
+      - ./sql/tables.sql:/docker-entrypoint-initdb.d/tables.sql
+
+  backend:
+    build: backend
+    command: [ "flask", "run", "--host=0.0.0.0" ]
+    volumes:
+      - ./backend:/backend
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+
+  frontend:
+    build: frontend
+    command: [ "npm", "start" ]
+    volumes:
+      - ./frontend:/frontend
+      - node-modules:/frontend/node_modules
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+
+volumes:
+  node-modules:

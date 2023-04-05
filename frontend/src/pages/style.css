@@ -1,0 +1,104 @@
+body{
+    /* background: #bdc3c7;  fallback for old browsers */
+    /* background: -webkit-linear-gradient(to right, #2c3e50, #bdc3c7);  Chrome 10-25, Safari 5.1-6 */
+    /* background: linear-gradient(to right, #2c3e50, #bdc3c7); W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    background: rgb(82, 194, 231);
+}
+
+.form{
+    background-color: rgb(203, 236, 247);
+    border-radius: 5px;
+    width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.form-two{
+    background-color: rgb(203, 236, 247);
+    border-radius: 5px;
+    width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.form-body{
+    height: 250px;
+    text-align: center;
+    padding: 20px 10px;
+}
+
+.form-body > *{
+    padding: 5px;
+}
+
+.form_label{
+    text-align: center;
+    width: 40%;
+    font-size: x-large;
+}
+
+.form_input{
+    width: 60%;
+    background-color: rgb(203, 236, 247);
+}
+
+.App-header {
+    background-color: '#CBECF7';
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: darkslategray;
+}
+
+.btn {
+    margin-right: 8px;
+    margin-left: 8px;
+    text-align: center;
+}
+
+.nav-btn {
+    margin-right: 8px;
+    margin-left: 8px;
+    text-align: center;
+    width: 123px;
+}
+
+.sidenav {
+    height: 100%;
+    width: 170px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: rgb(203, 236, 247);
+    overflow-x: hidden;
+    padding-top: 20px;
+}
+
+.navbar-brand {
+    width: 50%;
+    margin: auto;
+    display: block;
+}
+
+.navbar-brand-two {
+    width: 30%;
+    margin: auto;
+    display: block;
+}
+
+.center {
+    position: fixed;
+    top: 10%;
+    left: 30%;
+}
+
+.dropdown-container {
+    position: relative;
+}
+
+.center-text {
+    text-align: center;
+}
