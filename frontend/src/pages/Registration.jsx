@@ -20,8 +20,14 @@ function Registration() {
         }
 
         axios.post("http://localhost:5000/registration", registerPayload)
-        .then((response) =>
-                console.log(response.data.token))
+        .then(response => {
+            //get token from response
+            const token = response.data.token;
+
+            //set JWT token to local
+            localStorage.setItem("token", token);
+
+        })
         .catch((error) => console.log(error));
     }
 

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
+import jwt_decode from 'jwt-decode';
+
 
 export const setAuthToken = token => {
     if (token) {
@@ -32,7 +34,9 @@ function Login() {
 
                 //set token to axios common header
                 setAuthToken(token);
-                
+
+                const decoded = jwt_decode(token);
+                console.log(decoded.id)
 
                 //redirect user to home page
                 window.location.href = '/'

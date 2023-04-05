@@ -5,4 +5,4 @@ max-line-length = 88
 exclude = backend/__pycache__, backend/migrations,
         frontend, sql, database
 
-        
+ignore = E722
