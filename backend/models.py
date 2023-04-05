@@ -1,90 +1,86 @@
-from functools import wraps
+from datetime import datetime
 
-import app
-import jwt
-from config import Config
-from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects import postgresql
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
 
-class Account(db.Model):
-    __tablename__ = "account"
+class JWTTokenBlocklist(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    jwt_token = db.Column(db.String(), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
 
-    id = db.Column(db.INTEGER(), primary_key=True, autoincrement=True)
-    email = db.Column(db.VARCHAR(50), nullable=False, unique=True)
-    username = db.Column(db.VARCHAR(50), nullable=False, unique=True)
-    password = db.Column(db.VARCHAR(256), nullable=False)
-    created_on = db.Column(postgresql.TIMESTAMP(), autoincrement=False)
-    last_login = db.Column(postgresql.TIMESTAMP(), autoincrement=False, nullable=True)
-    admin = db.Column(db.Boolean)
+    def __repr__(self):
+        return f"Expired Token: {self.jwt_token}"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+
+class Account(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    email = db.Column(db.String(50), nullable=False, unique=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(256), nullable=False)
+    created_on = db.Column(db.DateTime(), default=datetime.utcnow)
+    admin = db.Column(db.Boolean(), default=False)
+    jwt_active = db.Column(db.Boolean())
+
+    def __repr__(self):
+        return f"User {self.username}"
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def update_email(self, new_email):
+        self.email = new_email
+
+    def update_username(self, new_username):
+        self.username = new_username
+
+    def check_jwt(self):
+        return self.jwt_active
+
+    def set_jwt(self, set_status):
+        self.jwt_active = set_status
 
 
 class Player(db.Model):
-    __tablename__ = "player"
-    id = db.Column(db.INTEGER(), autoincrement=True, nullable=False, primary_key=True)
-    player_id = db.Column(
-        db.INTEGER(), db.ForeignKey("account.id"), autoincrement=False, nullable=False
-    )
-    game_id = db.Column(
-        db.INTEGER(), db.ForeignKey("game.id"), autoincrement=False, nullable=False
-    )
+    id = db.Column(db.Integer(), nullable=False, primary_key=True)
+    player_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    game_id = db.Column(db.Integer(), db.ForeignKey("game.id"), nullable=False)
 
-    player_game_id_fkey = db.relationship("Game", foreign_keys="Player.game_id")
-    player_player_id_fkey = db.relationship("Account", foreign_keys="Player.player_id")
+    player_game_id_fkey = db.relationship("Game", foreign_keys="player.game_id")
+    player_player_id_fkey = db.relationship("Account", foreign_keys="player.player_id")
 
 
 class Result(db.Model):
-    __tablename__ = "result"
-    id = db.Column(db.INTEGER(), autoincrement=True, nullable=False, primary_key=True)
-    description = db.Column(db.VARCHAR(length=128), autoincrement=False, nullable=True)
+    id = db.Column(db.Integer(), nullable=False, primary_key=True)
+    description = db.Column(db.String(128), nullable=True)
     postgresql_ignore_search_path = False
 
 
 class Game(db.Model):
-    __tablename__ = "game"
-    id = db.Column(db.BIGINT(), primary_key=True, autoincrement=True, nullable=False)
-    start_time = db.Column(db.TIMESTAMP(), autoincrement=False, nullable=False)
-    end_time = db.Column(db.TIMESTAMP(), autoincrement=False, nullable=True)
-    player_one_id = db.Column(
-        db.INTEGER(), db.ForeignKey("account.id"), autoincrement=False, nullable=False
-    )
-    player_two_id = db.Column(
-        db.INTEGER(), db.ForeignKey("account.id"), autoincrement=False, nullable=False
-    )
-    result_id = db.Column(
-        db.INTEGER(), db.ForeignKey("result.id"), autoincrement=False, nullable=True
-    )
+    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    start_time = db.Column(db.DateTime(), nullable=False)
+    end_time = db.Column(db.DateTime(), nullable=True)
+    player_one_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    player_two_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
 
-    game_result_id_fkey = db.relationship("Result", foreign_keys="Game.result_id")
+    game_result_id_fkey = db.relationship("Result", foreign_keys="game.result_id")
     game_player_one_id_fkey = db.relationship(
-        "Account", foreign_keys="Game.player_one_id"
+        "Account", foreign_keys="game.player_one_id"
     )
     game_player_two_id_fkey = db.relationship(
-        "Account", foreign_keys="Game.player_two_id"
+        "Account", foreign_keys="game.player_two_id"
     )
-
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        # jwt is passed in the request header
-        if "x-access-token" in request.headers:
-            token = request.headers["x-access-token"]
-        # return 401 if token is not passed
-        if not token:
-            return jsonify({"message": "Token is missing !!"}), 401
-
-        try:
-            # decoding the payload to fetch the stored details
-            data = jwt.decode(token, app.config["SECRET_KEY"])
-            current_user = Account.query.filter_by(public_id=data["id"]).first()
-        except:
-            return jsonify({"message": "Token is invalid !!"}), 401
-        # returns the current logged in users context to the routes
-        return f(current_user, *args, **kwargs)
-
-    return decorated
