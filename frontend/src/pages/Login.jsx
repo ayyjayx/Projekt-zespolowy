@@ -14,28 +14,32 @@ export const setAuthToken = token => {
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loginStatus, setLoginStatus] = useState('');
 
-    const handleSubmit = () => {
+    const handleSubmit = (e) => {
+        e.preventDefault();
         const loginPayload = {
-            username: 'eve.holt@reqres.in',
-            password: 'cityslicka',
+            username: username,
+            password: password,
         }
 
-        axios.post("https://reqres.in/api/login", loginPayload)
-            .then(response => {
-                //get token from response
-                const token = response.data.token;
+        axios.post("http://localhost:5000/login", loginPayload).then(response => {
+            //get token from response
+            const token = response.data.token;
 
-                //set JWT token to local
-                localStorage.setItem("token", token);
+            //set JWT token to local
+            localStorage.setItem("token", token);
 
-                //set token to axios common header
-                setAuthToken(token);
+            //set token to axios common header
+            setAuthToken(token);
 
-                //redirect user to home page
-                window.location.href = '/'
-            })
-            .catch(err => console.log(err));
+            console.log(response);
+            response.status === 201 ?
+                window.location.href = '/loggedhome'
+                :
+                setLoginStatus('Logowanie nie powiodło się. Spróbuj ponownie')
+
+        }).catch(err => console.log(err));
     };
     return (
         <><header className="App-header">
@@ -60,6 +64,7 @@ function Login() {
                         </Link>
                         <Button variant="Primary" type="submit" className="btn">Zaloguj</Button>
                     </div>
+                    <p>{loginStatus}</p>
                 </form>
             </div>
         </>
