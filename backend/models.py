@@ -1,7 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from werkzeug.security import check_password_hash, generate_password_hash
 
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
@@ -49,19 +49,15 @@ class Account(db.Model):
 
     def check_jwt(self):
         return self.jwt_active
-    
+
     def set_jwt(self, set_status):
         self.jwt_active = set_status
 
 
 class Player(db.Model):
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
-    player_id = db.Column(
-        db.Integer(), db.ForeignKey("account.id"), nullable=False
-    )
-    game_id = db.Column(
-        db.Integer(), db.ForeignKey("game.id"), nullable=False
-    )
+    player_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    game_id = db.Column(db.Integer(), db.ForeignKey("game.id"), nullable=False)
 
     player_game_id_fkey = db.relationship("Game", foreign_keys="player.game_id")
     player_player_id_fkey = db.relationship("Account", foreign_keys="player.player_id")
@@ -77,15 +73,9 @@ class Game(db.Model):
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
     start_time = db.Column(db.DateTime(), nullable=False)
     end_time = db.Column(db.DateTime(), nullable=True)
-    player_one_id = db.Column(
-        db.Integer(), db.ForeignKey("account.id"), nullable=False
-    )
-    player_two_id = db.Column(
-        db.Integer(), db.ForeignKey("account.id"), nullable=False
-    )
-    result_id = db.Column(
-        db.Integer(), db.ForeignKey("result.id"), nullable=True
-    )
+    player_one_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    player_two_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
 
     game_result_id_fkey = db.relationship("Result", foreign_keys="game.result_id")
     game_player_one_id_fkey = db.relationship(

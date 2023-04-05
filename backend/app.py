@@ -1,8 +1,8 @@
-from init import create_app
-from models import db
-from flask_migrate import Migrate
 from config import DevelopmentConfig
 from flask_cors import CORS
+from flask_migrate import Migrate
+from init import create_app
+from models import db
 
 app = create_app()
 
