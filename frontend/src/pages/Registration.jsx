@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
+import axios from 'axios';
 import './style.css'
 
 function Registration() {
@@ -8,10 +9,34 @@ function Registration() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
+    const [registrationStatus, setRegistrationStatus] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-    }
+        const registerPayload = {
+            username: username,
+            email: email,
+            password: password,
+            passwordRepeat: passwordRepeat
+        }
+
+        axios.post("http://localhost:5000/registration", registerPayload)
+            .then(response => {
+                console.log(response);
+                response.status === 201 ?
+                    setRegistrationStatus('Rejestracja powiodła się! Możesz się teraz zalogować.')
+                    :
+                    setRegistrationStatus('Rejestracja nie powiodła się. Spróbuj ponownie')
+                setUsername('');
+                setEmail('');
+                setPassword('');
+                setPasswordRepeat('');
+            })
+            .catch(err => {
+                console.log(err)
+            }
+            );
+    };
 
     return (
         <><header className="App-header">
@@ -42,6 +67,7 @@ function Registration() {
                         </Link>
                         <Button variant="Primary" type="submit" className="btn">Zarejestruj</Button>
                     </div>
+                    <p>{registrationStatus}</p>
                 </form>
             </div></>
     );

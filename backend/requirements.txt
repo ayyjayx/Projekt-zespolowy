@@ -25,3 +25,5 @@ black==23.3.0
 mypy==1.1.1
 isort==5.11.5
 Werkzeug==2.2.3
+Six==1.16.0
+flask-cors==3.0.10
