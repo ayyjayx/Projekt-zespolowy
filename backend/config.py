@@ -18,10 +18,18 @@ class Config:
     MAIL_USE_SSL = False
     SERVER_NAME = 'localhost:5000'
 
+    JWT_SECRET_KEY = "super-secret"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database:5432/postgres"
 
+
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database-test:5432/postgres"
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://postgres:projekt1234@database-test:5432/postgres"
+    )

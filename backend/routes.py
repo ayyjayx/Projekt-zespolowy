@@ -18,7 +18,7 @@ def init_routes(app):
 
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
-        if request.method == "POST":
+        if request.method == 'POST':
             data = request.get_json()
             username = data.get("username")
             email = data.get("email")
@@ -168,7 +168,7 @@ def init_routes(app):
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
         if not account:
-            return make_response("Użytkownik nie istnieje.", 404)
+            return make_response("Account does not exist", 404)
 
         account.delete()
 
