@@ -15,20 +15,6 @@ services:
       - ./database:/var/lib/postgresql/data
       - ./sql/tables.sql:/docker-entrypoint-initdb.d/tables.sql
 
-  database-test:
-    image: postgres:latest
-    container_name: database-test
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=projekt1234
-      - POSTGRES_DB=postgres
-    ports:
-      - '90:5432'
-    volumes:
-      - ./database-test:/var/lib/postgresql/data
-      - ./sql/tables.sql:/docker-entrypoint-initdb.d/tables.sql
-
   backend:
     build: backend
     command: [ "flask", "run", "--host=0.0.0.0" ]
