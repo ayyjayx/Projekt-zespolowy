@@ -13,6 +13,14 @@ body{
     padding: 20px;
 }
 
+.form-two{
+    background-color: rgb(203, 236, 247);
+    border-radius: 5px;
+    width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
 .form-body{
     height: 250px;
     text-align: center;
@@ -25,7 +33,7 @@ body{
 
 .form_label{
     text-align: center;
-    width: 40%;
+    width: 80%;
     font-size: x-large;
 }
 
@@ -42,9 +50,55 @@ body{
     justify-content: center;
     font-size: calc(10px + 2vmin);
     color: darkslategray;
-  }
+}
 
 .btn {
     margin-right: 8px;
     margin-left: 8px;
+    text-align: center;
+}
+
+.nav-btn {
+    margin-right: 8px;
+    margin-left: 8px;
+    text-align: center;
+    width: 123px;
+}
+
+.sidenav {
+    height: 100%;
+    width: 170px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: rgb(203, 236, 247);
+    overflow-x: hidden;
+    padding-top: 20px;
+}
+
+.navbar-brand {
+    width: 50%;
+    margin: auto;
+    display: block;
+}
+
+.navbar-brand-two {
+    width: 30%;
+    margin: auto;
+    display: block;
+}
+
+.center {
+    position: fixed;
+    top: 10%;
+    left: 30%;
+}
+
+.dropdown-container {
+    position: relative;
+}
+
+.center-text {
+    text-align: center;
 }
