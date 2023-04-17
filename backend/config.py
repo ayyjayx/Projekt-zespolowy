@@ -1,8 +1,15 @@
+from datetime import timedelta
+
 class Config:
     DEBUG = False
     TESTING = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = "some_dev_key"
+    JWT_SECRET_KEY = "super-secret"
+    JWT_TOKEN_LOCATION = ["headers", "cookies"]
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=10)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_COOKIE_SECURE = False
 
 class DevelopmentConfig(Config):
     DEBUG = True

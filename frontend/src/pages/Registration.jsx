@@ -26,7 +26,7 @@ function Registration() {
                 response.status === 201 ?
                     setRegistrationStatus('Rejestracja powiodła się! Możesz się teraz zalogować.')
                     :
-                    setRegistrationStatus('Rejestracja nie powiodła się. Spróbuj ponownie')
+                    setRegistrationStatus(response.data)
                 setUsername('');
                 setEmail('');
                 setPassword('');

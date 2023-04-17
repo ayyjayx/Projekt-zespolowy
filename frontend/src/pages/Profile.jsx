@@ -1,58 +1,68 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Button from 'react-bootstrap/Button'
 import axios from 'axios';
 import jwt_decode from "jwt-decode";
+import { hasJWT } from '../utils/hasJWT.jsx';
+import Cookies from 'universal-cookie';
+import { refreshToken } from '../utils/refreshToken.jsx';
+
+
 
 function Profile() {
+    refreshToken();
+    const cookies = new Cookies();
+    const token = cookies.get("access_token");
+    hasJWT() ? "" : window.location.href = '/login';
     const [account, setAccount] = useState('');
-    const token = localStorage.getItem('token');
     const decoded = jwt_decode(token);
     const account_id = decoded.id;
 
     useEffect(() => {
-        axios.get("http://localhost:5000/account", {
+        axios.get("http://localhost:5000/profile", {
             headers: {
                 "Content-Type": "application/json",
-                'Authorization': 'Bearer '+token,
+                'Authorization': 'Bearer ' + token,
             },
-            data: {id: account_id}, })
-        .then(response => {
-            console.log(response.data);
-            setAccount(response.data); })
-        .catch(err => {
-            console.log(err)}); },
-    []);
+            data: { id: account_id },
+        })
+            .then(response => {
+                console.log(response.data);
+                setAccount(response.data);
+                // const new_token = response.data.token;
+                // cookies.set("jwt_auth", new_token);
+            })
+            .catch(err => { console.log(err) });
+    },
+        []);
 
     const handleEdit = () => {
-        // przejscie na stronę do edycji
-        window.location.href = '/account/update'
+        window.location.href = '/profile/update'
     };
 
     const handleDelete = () => {
+        window.location.href = '/profile/delete'
         const deletePayload = {
             id: decoded.id,
         }
 
         axios.delete("http://localhost:5000/account/delete", deletePayload)
-        .then(response => {
-            console.log(response);
-            // tu statusy
-        })
-        .catch(err => {
-            console.log(err);
-            // tu tesz
-        });
+            .then(response => {
+                console.log(response);
+            })
+            .catch(err => {
+                console.log(err);
+            });
     };
 
     return (
-        <div>
-        <h1>Profile</h1>
-        <p>{decoded.id}</p>
-        <p>Username: {account.username}</p>
-        <p>Email: {account.email}</p>
-        <p>Created on: {account.created_on}</p>
-        <button onClick={handleEdit}>Edit</button>
-        <button onClick={handleDelete}>Delete</button>
-    </div>
+        <div className="center">
+            <h1>Twoje konto</h1>
+            <p>Nazwa użytkownika: {account.username}</p>
+            <p>Email: {account.email}</p>
+            <p>Data utworzenia konta: {account.created_on}</p>
+            <Button onClick={handleEdit}>Edytuj</Button>
+            <Button variant="danger" onClick={handleDelete}>Usuń konto</Button>
+        </div>
     );
 }
 
