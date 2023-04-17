@@ -3,11 +3,14 @@ import jwt
 from config import Config
 from flask import jsonify, make_response, request
 from models import Account, db, JWTTokenBlocklist
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jwt, set_access_cookies, unset_jwt_cookies, create_refresh_token
+from flask_cors import cross_origin
+from datetime import datetime, timedelta, timezone
 
 
 def init_routes(app):
-    @app.route("/home", methods=["GET", "POST"])
+        
+    @app.route("/loggedhome", methods=["GET", "POST"])
     def home():
         data = request.get_data()
         return jsonify(data)
@@ -44,30 +47,34 @@ def init_routes(app):
                 return make_response("Passwords do not match", 202)
         else:
             return make_response("Use POST method", 200)
-
+    
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        if request.method == 'POST':
+        if request.method == "POST":
             data = request.get_json()
             username = data.get("username")
             password = data.get("password")
 
             if not username or not password:
-                return make_response("Missing data.", 401)
+                return make_response("Missing data.", 200)
 
             account = Account.query.filter_by(username=username).first()
 
             if not account:
-                return make_response("Account does not exist.", 401)
+                return make_response("Account does not exist.", 200)
 
             if account.check_password(password):
-                token = create_access_token(identity=account.id)
-                return jsonify({"token": token})
+                access_token = create_access_token(identity=account.id)
+                refresh_token = create_refresh_token(identity=account.id)
+                response = jsonify(access_token=access_token, refresh_token=refresh_token)
+                response.headers['Access-Control-Allow-Methods']='http://localhost:3000'
+                # set_access_cookies(response, access_token, refresh_token)
+                return response
 
-            return make_response("Incorrect Password.", 403)
+            return make_response("Incorrect Password.", 200)
         else:
             return make_response("Use POST", 200)
-
+    
     @app.route("/logout", methods=["GET", "POST"])
     @jwt_required()
     def logout():
@@ -75,10 +82,11 @@ def init_routes(app):
 
         jwt_block = JWTTokenBlocklist(jwt_token=token)
         jwt_block.save()
-
-        return make_response("Token expired.", 200)
+        response = make_response("Token expired.", 200)
+        unset_jwt_cookies(response)
+        return response
         
-    @app.route("/account", methods=["GET"])
+    @app.route("/profile", methods=["GET"])
     @jwt_required()
     def show_account():
         current_user = get_jwt_identity()
@@ -93,41 +101,47 @@ def init_routes(app):
             "username": account.username,
             "created_on": account.created_on}), 200
 
-    @app.route("/account/update", methods=["GET", "POST"])
+    @app.route("/profile/update", methods=["GET", "POST"])
     @jwt_required()
+    @cross_origin()
     def edit_account():
         data = request.get_json()
-        id = data.get("id")
+        id = data.get('id')
+        payload = data.get("updatePayload")
+        id = payload.get("id")
+        new_username = payload.get("username")
+        new_email = payload.get("email")
+        password = payload.get("password")
         account = Account.query.filter_by(id=id).first()
 
         if not account:
-            return make_response("Account does not exist", 404)
+            return make_response("Account does not exist", 201)
 
         if request.method == 'POST':
-            data = request.get_json()
-            new_username = data.get("username")
-            new_email = data.get("email")
-            new_password = data.get("password")
-            new_passwordRepeat = data.get("passwordRepeat")
+            new_username = payload.get("username")
+            new_email = payload.get("email")
+            password = payload.get("password")
+            print("username", new_username)
+            print("email", new_email)
+            
+            if account.check_password(password):
+                if new_username != '':
+                    account.update_username(new_username)
 
-            if new_username is not None:
-                account.update_username(new_username)
+                if new_email != '':
+                    account.update_email(new_email)
 
-            if new_email is not None:
-                account.update_email(new_email)
+                account.save()
+                response = make_response("Account successfully updated.", 200)
+                response.headers['Access-Control-Allow-Methods']='http://localhost:3000'
+                return response
 
-            if new_password is not None and new_passwordRepeat is not None:
-                if new_password == new_passwordRepeat:
-                    account.update_password(new_password)
-
-            account.save()
-
-            return make_response("Account successfully updated.", 200)
+            return make_response("Wrong password.", 201)
 
         return jsonify({
             "id": account.id,
             "email": account.email,
-            "username": account.username}), 200
+            "username": account.username}), 201
 
     @app.route("/account/delete", methods=["DELETE"])
     @jwt_required()
@@ -142,3 +156,11 @@ def init_routes(app):
         account.delete()
 
         return make_response("Account successfully deleted.", 200)
+    
+    @app.route("/refresh", methods=["POST"])
+    @jwt_required(refresh=True)
+    def refresh():
+        current_user = get_jwt_identity()
+        account = Account.query.get(current_user)
+        access_token = create_access_token(identity=account.id)
+        return jsonify(access_token=access_token)
