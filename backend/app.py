@@ -11,7 +11,7 @@ db.init_app(app)
 app.config.from_object(DevelopmentConfig)
 migrate = Migrate(app, db)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/*": {"origins": "*"}}, headers={'Access-Control-Allow-Origin': 'http://localhost:3000'})
 jwt = JWTManager(app)
 
 if __name__ == "__main__":
