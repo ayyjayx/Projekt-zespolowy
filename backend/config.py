@@ -16,6 +16,7 @@ class Config:
     MAIL_PASSWORD = '59478b0bd8b607'
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
+    SERVER_NAME = 'localhost:5000'
 
 class DevelopmentConfig(Config):
     DEBUG = True

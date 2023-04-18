@@ -176,15 +176,14 @@ def init_routes(app):
     def reset():
         data = request.get_json()
         email = data.get("email")
-
         account = Account.query.filter_by(email=email).first()
+
         with app.app_context():
             mail = Mail(app)
             msg = Message()
             msg.subject = "Szaszki Password Reset"
             msg.sender = Config.MAIL_USERNAME
             msg.recipients = [email]
-            reset_password_link = url_for("reset_password", email=email)
             msg.html = render_template_string('''
                     <!DOCTYPE html>
                     <html>
@@ -196,20 +195,19 @@ def init_routes(app):
                         <p>Dear user {{ account }},</p>
                         <p>We have received a request to reset your password. If you did not request this change, please ignore this message.</p>
                         <p>To reset your password, please click the following link:</p>
-                        <p><a href="{{ reset_password_link  }}">Reset Password</a></p>
+                        <p><a href="http://localhost:3000/reset_password?email={{email}}">Reset Password</a></p>
                         <p>Thank you,</p>
                         <p>The Szaszki Team</p>
                     </body>
                     </html>
-                ''', account=account.username, reset_password_link=reset_password_link)
+                ''', account=account.username, email=email)
             mail.send(msg)
+        return make_response(f"{email} wyslany", 201)
 
-        return make_response("Email został wysłany.", 201)
-
-    @app.route("/reset_password", methods=["GET", "POST"])
-    def reset_password():
-        email = request.args.get('email')
-        print(email)
+    @app.route("/reset_password?email=<email>", methods=["GET", "POST"])
+    def reset_password(email):
+        email = email
+        account = Account.query.filter_by(email=email).first()
 
         if request.method == 'POST':
             data = request.get_json()
@@ -222,5 +220,6 @@ def init_routes(app):
             
             else:
                 return jsonify("Passowords dont match", 280)
-        else:
-            return jsonify("???", 233)
+
+        else: return jsonify({"email": email}), 200
+            
