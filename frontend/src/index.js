@@ -9,7 +9,7 @@ import LoggedHome from "./pages/LoggedHome";
 import Profile from './pages/Profile';
 import About from './pages/About';
 import ProfileUpdate from './pages/ProfileUpdate';
-// import ProfileDelete from './pages/ProfileDelete';
+import ProfileDelete from './pages/ProfileDelete';
 
 export default function App() {
   return (
@@ -23,14 +23,11 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="about" element={<About />} />
           <Route path="profile/update" element={<ProfileUpdate />} />
-          {/* <Route path ="profile/delete" element={<ProfileDelete />} /> */}
+          <Route path ="profile/delete" element={<ProfileDelete />} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
-const container = document.getElementById("root");
-const root = ReactDOMClient.createRoot(container);
-root.render(<App />);
-
+ReactDOMClient.createRoot(document.getElementById("root")).render(<App />);

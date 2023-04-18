@@ -1,5 +1,4 @@
 import React from 'react';
-import jwt_decode from 'jwt-decode';
 import { setAuthToken } from './Login';
 import board from "../assets/board.avif";
 import { hasJWT } from '../utils/hasJWT.jsx';
@@ -15,8 +14,6 @@ function LoggedHome() {
     if (!hasJWT()) {
         window.location.href = "/"
     }
-    let username = jwt_decode(token, { header: true })
-    console.log(username);
     return (
         <>
             <header className='App-header'>szaszki.pl</header>

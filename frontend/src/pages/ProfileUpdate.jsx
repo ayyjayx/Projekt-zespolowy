@@ -5,6 +5,7 @@ import { hasJWT } from '../utils/hasJWT.jsx';
 import jwt_decode from "jwt-decode";
 import './style.css'
 import Cookies from 'universal-cookie';
+import { refreshToken } from '../utils/refreshToken.jsx';
 
 
 function ProfileUpdate() {
@@ -23,16 +24,24 @@ function ProfileUpdate() {
     useEffect(() => {
         axios.get("http://localhost:5000/profile", {
             headers: {
-                "Content-Type": "application/json",
-                'Authorization': 'Bearer ' + token
+                "Content-Type": "application/json"
             },
             data: { id: account_id },
         })
             .then(response => {
-                console.log(response.status);
                 setAccount(response.data);
             })
-            .catch(err => { console.log(err) });
+            .catch(err => {
+                console.log(err);
+                if (err.response.data.msg == "Token has expired") {
+                    try {
+                        refreshToken();
+                    }
+                    catch {
+                        console.error("error");
+                    }
+                }
+            });
     },
         []);
 
@@ -47,13 +56,11 @@ function ProfileUpdate() {
 
         axios.post("http://localhost:5000/profile/update", {
             headers: {
-                "Content-Type": "application/json",
-                'Authorization': 'Bearer ' + token
+                "Content-Type": "application/json"
             },
             updatePayload
         })
             .then(response => {
-                console.log(response);
                 setUpdateStatus(response.data);
                 setPassword('');
             })

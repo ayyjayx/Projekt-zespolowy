@@ -4,9 +4,7 @@ import { Link } from "react-router-dom";
 import { hasJWT } from '../utils/hasJWT.jsx';
 
 function Home() {
-    if (hasJWT()) {
-        window.location.href = "/loggedhome"
-    }
+    hasJWT() ? window.location.href = '/loggedhome' : '';
 
     return (
         <>

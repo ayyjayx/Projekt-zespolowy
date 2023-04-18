@@ -22,11 +22,7 @@ function Registration() {
 
         axios.post("http://localhost:5000/registration", registerPayload)
             .then(response => {
-                console.log(response);
-                response.status === 201 ?
-                    setRegistrationStatus('Rejestracja powiodła się! Możesz się teraz zalogować.')
-                    :
-                    setRegistrationStatus(response.data)
+                setRegistrationStatus(response.data)
                 setUsername('');
                 setEmail('');
                 setPassword('');
