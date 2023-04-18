@@ -1,10 +1,13 @@
 import React from "react";
+// import { useState } from "react";
 import { Link } from "react-router-dom";
 import { hasJWT } from '../src/utils/hasJWT.jsx';
 import { setAuthToken } from '../src/pages/Login';
 import test from "./assets/test.png";
 import info from "./assets/info.png";
 import Cookies from 'universal-cookie';
+
+
 
 const cookies = new Cookies();
 const token = cookies.get("access_token");
@@ -13,14 +16,15 @@ if (token) {
 }
 
 function LogOut() {
+    setAuthToken(false);
     cookies.remove("access_token");
     cookies.remove("refresh_token");
-    setAuthToken(false);
     window.location.href = '/';
-    console.log("Wylogowano");
 }
 
 function Navbar() {
+    // const [isLoggedIn, setIsLoggedIn] = useState('');
+    // hasJWT() ? setIsLoggedIn('true') : setIsLoggedIn('false')
     let isLoggedIn = false;
     hasJWT() ? isLoggedIn = true : isLoggedIn = false;
     return (
@@ -29,9 +33,9 @@ function Navbar() {
                 <ul className="nav flex-column">
                     <li className="nav-item">
                         <Link to="/">
-                            <a className="navbar-brand">
+                            <p className="navbar-brand">
                                 <img src={test} width="80" height="80" alt=""></img>
-                            </a>
+                            </p>
                         </Link>
                     </li>
                     <li className="nav-item">
@@ -39,10 +43,10 @@ function Navbar() {
                             <button type="button" className="btn nav-btn btn-warning btn-block mb-1 dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Graj</button>
                             <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                 <Link to="/">
-                                    <a className="dropdown-item">Gracz</a>
+                                    <p className="dropdown-item">Gracz</p>
                                 </Link>
                                 <Link to="/">
-                                    <a className="dropdown-item">Komputer</a>
+                                    <p className="dropdown-item">Komputer</p>
                                 </Link>
                             </div>
                         </div>
@@ -88,9 +92,9 @@ function Navbar() {
                     )}
                     <li className="nav-item">
                         <Link to="/about">
-                            <a className="navbar-brand-two">
+                            <p className="navbar-brand-two">
                                 <img src={info} width="40" height="40" alt=""></img>
-                            </a>
+                            </p>
                         </Link>
                     </li>
                 </ul>

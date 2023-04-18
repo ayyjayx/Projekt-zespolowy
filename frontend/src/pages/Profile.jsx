@@ -26,7 +26,6 @@ function Profile() {
             data: { id: account_id },
         })
             .then(response => {
-                // console.log(response.data);
                 setAccount(response.data);
                 refreshToken();
             })
@@ -40,17 +39,6 @@ function Profile() {
 
     const handleDelete = () => {
         window.location.href = '/profile/delete'
-        const deletePayload = {
-            id: decoded.id,
-        }
-
-        axios.delete("http://localhost:5000/account/delete", deletePayload)
-            .then(response => {
-                console.log(response);
-            })
-            .catch(err => {
-                console.log(err);
-            });
     };
 
     return (

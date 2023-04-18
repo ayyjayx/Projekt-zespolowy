@@ -30,7 +30,4 @@ export default function App() {
   );
 }
 
-const container = document.getElementById("root");
-const root = ReactDOMClient.createRoot(container);
-root.render(<App />);
-
+ReactDOMClient.createRoot(document.getElementById("root")).render(<App />);

@@ -28,21 +28,17 @@ function Login() {
 
         axios.post("http://localhost:5000/login", loginPayload)
             .then(response => {
-
-                console.log(response.data)
-                const access_token = response.data.access_token;
-                const refresh_token = response.data.refresh_token;
-                cookies.set("access_token", access_token);
-                cookies.set("refresh_token", refresh_token)
-                //set token to axios common header
-                setAuthToken(access_token);
-
-                console.log(response);
-                response.status === 201 ?
-                    setLoginStatus('Logowanie nie powiodło się. Spróbuj ponownie')
-                    :
-                    window.location.href = '/loggedhome'
-
+                if (response.status === 201) {
+                    setLoginStatus(response.data);
+                }
+                else {
+                    const access_token = response.data.access_token;
+                    const refresh_token = response.data.refresh_token;
+                    cookies.set("access_token", access_token);
+                    cookies.set("refresh_token", refresh_token);
+                    setAuthToken(access_token);
+                    window.location.href = '/loggedhome';
+                }
             }).catch(err => console.log(err));
     };
     return (
