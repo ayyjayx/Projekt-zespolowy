@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
-import jwt
+from flask_mail import Mail, Message
 from config import Config
-from flask import jsonify, make_response, request
-from models import Account, db, JWTTokenBlocklist
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jwt, set_access_cookies, unset_jwt_cookies, create_refresh_token
+from flask import jsonify, make_response, request, render_template_string, url_for
+from models import Account
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, get_jwt, unset_jwt_cookies, create_refresh_token
 from flask_cors import cross_origin
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+import secrets
 
 
 def init_routes(app):
@@ -79,10 +79,6 @@ def init_routes(app):
     @app.route("/logout", methods=["GET", "POST"])
     @jwt_required()
     def logout():
-        token = request.headers["Authorization"]
-
-        jwt_block = JWTTokenBlocklist(jwt_token=token)
-        jwt_block.save()
         response = make_response("Token expired.", 200)
         unset_jwt_cookies(response)
         return response
@@ -135,10 +131,14 @@ def init_routes(app):
             
             if account.check_password(password):
                 if new_username != '':
-                    account.update_username(new_username)
+                    username_exists = Account.query.get(username=new_username)
+                    if not username_exists:
+                        account.update_username(new_username)
 
                 if new_email != '':
-                    account.update_email(new_email)
+                    email_exists = Account.query.get(username=new_email)
+                    if not email_exists:
+                        account.update_email(new_email)
 
                 account.save()
                 return make_response("Dane konta zaktualizowane", 200)
@@ -171,3 +171,56 @@ def init_routes(app):
         access_token = create_access_token(identity=account.id)
         response = jsonify(access_token=access_token)
         return response
+    
+    @app.route("/reset_send_email", methods=["GET", "POST"])
+    def reset():
+        data = request.get_json()
+        email = data.get("email")
+
+        account = Account.query.filter_by(email=email).first()
+        with app.app_context():
+            mail = Mail(app)
+            msg = Message()
+            msg.subject = "Szaszki Password Reset"
+            msg.sender = Config.MAIL_USERNAME
+            msg.recipients = [email]
+            reset_password_link = url_for("reset_password", email=email)
+            msg.html = render_template_string('''
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Password Reset Email</title>
+                    </head>
+                    <body>
+                        <h1>Password Reset</h1>
+                        <p>Dear user {{ account }},</p>
+                        <p>We have received a request to reset your password. If you did not request this change, please ignore this message.</p>
+                        <p>To reset your password, please click the following link:</p>
+                        <p><a href="{{ reset_password_link  }}">Reset Password</a></p>
+                        <p>Thank you,</p>
+                        <p>The Szaszki Team</p>
+                    </body>
+                    </html>
+                ''', account=account.username, reset_password_link=reset_password_link)
+            mail.send(msg)
+
+        return make_response("Email został wysłany.", 201)
+
+    @app.route("/reset_password", methods=["GET", "POST"])
+    def reset_password():
+        email = request.args.get('email')
+        print(email)
+
+        if request.method == 'POST':
+            data = request.get_json()
+            new_password = data.get('password')
+            new_passwordR = data.get('passwordRepeat')
+
+            if new_password == new_passwordR:
+                account.update_password(new_password)
+                return jsonify("Hasło zostało zmienione :)", 201)
+            
+            else:
+                return jsonify("Passowords dont match", 280)
+        else:
+            return jsonify("???", 233)
