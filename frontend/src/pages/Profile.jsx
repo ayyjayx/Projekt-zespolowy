@@ -9,7 +9,7 @@ import { refreshToken } from '../utils/refreshToken.jsx';
 
 
 function Profile() {
-    refreshToken();
+
     const cookies = new Cookies();
     const token = cookies.get("access_token");
     hasJWT() ? "" : window.location.href = '/login';
@@ -26,10 +26,9 @@ function Profile() {
             data: { id: account_id },
         })
             .then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 setAccount(response.data);
-                // const new_token = response.data.token;
-                // cookies.set("jwt_auth", new_token);
+                refreshToken();
             })
             .catch(err => { console.log(err) });
     },

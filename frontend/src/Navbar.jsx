@@ -16,7 +16,8 @@ function LogOut() {
     cookies.remove("access_token");
     cookies.remove("refresh_token");
     setAuthToken(false);
-    window.location.href = '/'
+    window.location.href = '/';
+    console.log("Wylogowano");
 }
 
 function Navbar() {

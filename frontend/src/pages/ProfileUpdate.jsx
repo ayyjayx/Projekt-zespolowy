@@ -5,7 +5,6 @@ import { hasJWT } from '../utils/hasJWT.jsx';
 import jwt_decode from "jwt-decode";
 import './style.css'
 import Cookies from 'universal-cookie';
-import { setAuthToken } from './Login.jsx';
 
 
 function ProfileUpdate() {
@@ -30,8 +29,8 @@ function ProfileUpdate() {
             data: { id: account_id },
         })
             .then(response => {
+                console.log(response.status);
                 setAccount(response.data);
-                setAuthToken(response.data.token);
             })
             .catch(err => { console.log(err) });
     },
@@ -45,8 +44,6 @@ function ProfileUpdate() {
             email: email,
             password: password
         }
-
-        console.log("aaa", updatePayload);
 
         axios.post("http://localhost:5000/profile/update", {
             headers: {

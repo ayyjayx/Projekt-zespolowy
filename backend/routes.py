@@ -68,7 +68,6 @@ def init_routes(app):
                 refresh_token = create_refresh_token(identity=account.id)
                 response = jsonify(access_token=access_token, refresh_token=refresh_token)
                 response.headers['Access-Control-Allow-Methods']='http://localhost:3000'
-                # set_access_cookies(response, access_token, refresh_token)
                 return response
 
             return make_response("Incorrect Password.", 200)
@@ -89,11 +88,21 @@ def init_routes(app):
     @app.route("/profile", methods=["GET"])
     @jwt_required()
     def show_account():
+        # data = request.get_json()
+        # id = data.get("id")
+        # account = Account.query.get(id)
         current_user = get_jwt_identity()
+        print("current user", current_user)
         account = Account.query.get(current_user)
+        print("account", account)
+        
+        exp_timestamp = get_jwt()["exp"]
+        if datetime.now(timezone.utc) > exp_timestamp:
+            return make_response("Access token expired", 210)
 
         if not account:
             return make_response("Account does not exist.", 404)
+            
         
         return jsonify({
             "id": account.id,
@@ -113,6 +122,10 @@ def init_routes(app):
         new_email = payload.get("email")
         password = payload.get("password")
         account = Account.query.filter_by(id=id).first()
+        
+        exp_timestamp = get_jwt()["exp"]
+        if datetime.now(timezone.utc) > exp_timestamp:
+            return make_response("Access token expired", 210)
 
         if not account:
             return make_response("Account does not exist", 201)
@@ -121,8 +134,6 @@ def init_routes(app):
             new_username = payload.get("username")
             new_email = payload.get("email")
             password = payload.get("password")
-            print("username", new_username)
-            print("email", new_email)
             
             if account.check_password(password):
                 if new_username != '':
@@ -132,9 +143,7 @@ def init_routes(app):
                     account.update_email(new_email)
 
                 account.save()
-                response = make_response("Account successfully updated.", 200)
-                response.headers['Access-Control-Allow-Methods']='http://localhost:3000'
-                return response
+                return make_response("Account successfully updated.", 200)
 
             return make_response("Wrong password.", 201)
 
@@ -158,9 +167,11 @@ def init_routes(app):
         return make_response("Account successfully deleted.", 200)
     
     @app.route("/refresh", methods=["POST"])
-    @jwt_required(refresh=True)
+    @jwt_required()
     def refresh():
+        dane = request.headers["Authorization"]
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
         access_token = create_access_token(identity=account.id)
-        return jsonify(access_token=access_token)
+        response = jsonify(access_token=access_token)
+        return response
