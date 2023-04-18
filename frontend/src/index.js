@@ -10,6 +10,8 @@ import Profile from './pages/Profile';
 import About from './pages/About';
 import ProfileUpdate from './pages/ProfileUpdate';
 import ProfileDelete from './pages/ProfileDelete';
+import PasswordReset from './pages/PasswordReset';
+import ResetEmail from './pages/ResetEmail';
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
           <Route path="about" element={<About />} />
           <Route path="profile/update" element={<ProfileUpdate />} />
           <Route path ="profile/delete" element={<ProfileDelete />} />
+          <Route path ="reset_password" element={<PasswordReset />} />
+          <Route path ="reset_send_email" element={<ResetEmail />} />
         </Route>
       </Routes>
     </BrowserRouter>
