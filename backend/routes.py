@@ -25,26 +25,29 @@ def init_routes(app):
             passwordRepeat = data.get("passwordRepeat")
 
             if not username or not password or not email or not passwordRepeat:
-                return make_response("Missing data", 401)
+                return make_response("Brak danych", 202)
 
             if len(password) < 4:
-                return make_response("Password must be >=4 characters long", 411)
+                return make_response("Hasło musi mieć conajmniej 4 znaki!", 202)
 
             if password == passwordRepeat:
-                account_exists = Account.query.filter_by(email=email).first()
-                if not account_exists:
-                    new_account = Account(
-                        username=username,
-                        email=email
-                    )
-                    new_account.set_password(password)
-                    new_account.save()
-
-                    return make_response("Successfully registered.", 201)
-                else:
-                    return make_response("Account already exists.", 202)
+                username_exists = Account.query.filter_by(username=username).first()
+                email_exists = Account.query.filter_by(email=email).first()
+                if not username_exists:
+                    if not email_exists:
+                        new_account = Account(
+                            username=username,
+                            email=email
+                        )
+                        new_account.set_password(password)
+                        new_account.save()
+                        return make_response("Rejestracja ukończona pomyślnie. Zaloguj się", 201)
+                    else: 
+                        return make_response("Ten email jest już przypisany do konta", 202)
+                else: 
+                    return make_response("Ta nazwa użytkownika jest już zajęta", 202)
             else:
-                return make_response("Passwords do not match", 202)
+                return make_response("Hasła różnią się od siebie", 202)
         else:
             return make_response("Use POST method", 200)
     
@@ -56,23 +59,22 @@ def init_routes(app):
             password = data.get("password")
 
             if not username or not password:
-                return make_response("Missing data.", 200)
+                return make_response("Brak danych.", 201)
 
             account = Account.query.filter_by(username=username).first()
 
             if not account:
-                return make_response("Account does not exist.", 200)
+                return make_response("Konto nie istnieje.", 201)
 
             if account.check_password(password):
                 access_token = create_access_token(identity=account.id)
                 refresh_token = create_refresh_token(identity=account.id)
                 response = jsonify(access_token=access_token, refresh_token=refresh_token)
-                response.headers['Access-Control-Allow-Methods']='http://localhost:3000'
                 return response
 
-            return make_response("Incorrect Password.", 200)
+            return make_response("Niepoprawne hasło.", 201)
         else:
-            return make_response("Use POST", 200)
+            return make_response("Use POST", 201)
     
     @app.route("/logout", methods=["GET", "POST"])
     @jwt_required()
@@ -88,22 +90,17 @@ def init_routes(app):
     @app.route("/profile", methods=["GET"])
     @jwt_required()
     def show_account():
-        # data = request.get_json()
-        # id = data.get("id")
-        # account = Account.query.get(id)
         current_user = get_jwt_identity()
-        print("current user", current_user)
         account = Account.query.get(current_user)
-        print("account", account)
-        
         exp_timestamp = get_jwt()["exp"]
-        if datetime.now(timezone.utc) > exp_timestamp:
-            return make_response("Access token expired", 210)
-
+        now_timestamp = datetime.timestamp(datetime.now(timezone.utc))
+        
+        if now_timestamp > exp_timestamp:
+            return make_response("Access token expired", 200)
+        
         if not account:
             return make_response("Account does not exist.", 404)
-            
-        
+
         return jsonify({
             "id": account.id,
             "email": account.email,
@@ -115,6 +112,11 @@ def init_routes(app):
     @cross_origin()
     def edit_account():
         data = request.get_json()
+        exp_timestamp = get_jwt()["exp"]
+        now_timestamp = datetime.timestamp(datetime.now(timezone.utc))
+        if now_timestamp > exp_timestamp:
+            return make_response("Access token expired", 200)
+        
         id = data.get('id')
         payload = data.get("updatePayload")
         id = payload.get("id")
@@ -123,13 +125,9 @@ def init_routes(app):
         password = payload.get("password")
         account = Account.query.filter_by(id=id).first()
         
-        exp_timestamp = get_jwt()["exp"]
-        if datetime.now(timezone.utc) > exp_timestamp:
-            return make_response("Access token expired", 210)
-
         if not account:
             return make_response("Account does not exist", 201)
-
+        
         if request.method == 'POST':
             new_username = payload.get("username")
             new_email = payload.get("email")
@@ -143,22 +141,20 @@ def init_routes(app):
                     account.update_email(new_email)
 
                 account.save()
-                return make_response("Account successfully updated.", 200)
+                return make_response("Dane konta zaktualizowane", 200)
 
-            return make_response("Wrong password.", 201)
+            return make_response("Niepoprawne hasło.", 201)
 
         return jsonify({
             "id": account.id,
             "email": account.email,
             "username": account.username}), 201
 
-    @app.route("/account/delete", methods=["DELETE"])
+    @app.route("/profile/delete", methods=["DELETE"])
     @jwt_required()
     def delete_account():
-        data = request.get_json()
-        id = data.get("id")
-        account = Account.query.filter_by(id=id).first()
-
+        current_user = get_jwt_identity()
+        account = Account.query.get(current_user)
         if not account:
             return make_response("Account does not exist", 404)
         
@@ -167,7 +163,7 @@ def init_routes(app):
         return make_response("Account successfully deleted.", 200)
     
     @app.route("/refresh", methods=["POST"])
-    @jwt_required()
+    @jwt_required(refresh=True)
     def refresh():
         dane = request.headers["Authorization"]
         current_user = get_jwt_identity()
