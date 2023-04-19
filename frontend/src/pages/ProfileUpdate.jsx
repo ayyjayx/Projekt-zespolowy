@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
+import { Link } from "react-router-dom";
 import { hasJWT } from '../utils/hasJWT.jsx';
 import jwt_decode from "jwt-decode";
 import './style.css'
@@ -100,6 +101,9 @@ function ProfileUpdate() {
                     </p>
                     <div className="footer">
                         <Button variant="Primary" type="submit" className="btn">Zmień dane</Button>
+                        <Link to='/reset_send_email'>
+                            <Button variant="Primary" className="btn">Resetuj hasło</Button>
+                        </Link>
                     </div>
                     <p>{updateStatus}</p>
                 </form>
