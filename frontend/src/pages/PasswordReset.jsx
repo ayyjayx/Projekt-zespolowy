@@ -1,42 +1,28 @@
-import React, { useEffect, useState }from 'react';
+import React, { useState }from 'react';
 import axios from 'axios';
+import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
 
 function PasswordReset() {
 
-    // const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
-
-
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const email = params.get('email');
-
-        axios.get("http://localhost:5000/reset_password?email=", {params: {email}})
-            .then(response => {
-                console.log(response.data);
-                // setEmail(email);
-            })
-            .catch(err => { console.log(err) });
-    },
-        []);
+    const [resetStatus, setResetStatus] = useState('');
+    const emailMatch = window.location.href.match(/email=([^&]+)/);
+    const email = emailMatch ? emailMatch[1] : '';
 
     const handleSubmit = (e) => {
-        const params = new URLSearchParams(window.location.search);
-        const email = params.get('email');
-
         e.preventDefault();
         const registerPayload = {
             password: password,
             passwordRepeat: passwordRepeat
         }
-        axios.post("http://localhost:5000/reset_password?email=" + email, registerPayload)
+        axios.post("http://localhost:5000/reset_password" + email, registerPayload)
             .then(response => {
-                console.log(response)
                 setPassword('');
                 setPasswordRepeat('');
+                setResetStatus(response.data);
             })
             .catch(err => {
                 console.log(err)
@@ -54,6 +40,7 @@ function PasswordReset() {
                         <div className="reset password">
                             <label className="form_label" htmlFor="firstName">Reset Hasła </label>
                         </div>
+                        <p>Email: {email}</p>
                         <div className="password">
                             <input value={password} onChange={(e) => setPassword(e.target.value)} className="form_input" type="password" id="password" placeholder="Hasło" />
                         </div>
@@ -63,7 +50,11 @@ function PasswordReset() {
                     </div>
                     <div className="footer">
                         <Button variant="Primary" type="submit" className="btn">Zmień dane</Button>
+                        <Link to='/login'>
+                            <Button variant="Primary" className="btn">Powrót do logowania</Button>
+                        </Link>
                     </div>
+                    <p>{resetStatus}</p>
                 </form>
             </div></>
     );

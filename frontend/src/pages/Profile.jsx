@@ -7,7 +7,6 @@ import Cookies from 'universal-cookie';
 import { refreshToken } from '../utils/refreshToken.jsx';
 
 
-
 function Profile() {
 
     const cookies = new Cookies();
