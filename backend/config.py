@@ -30,6 +30,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = (
-        "postgresql://postgres:projekt1234@database-test:5432/postgres"
-    )
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_BINDS = {
+        "temporary": "sqlite:///:memory:"
+    }
