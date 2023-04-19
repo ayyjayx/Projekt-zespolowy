@@ -1,17 +1,14 @@
 import React, { useState }from 'react';
 import axios from 'axios';
+import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
 
 
- export const getPost = (funcParamURL) => {
-        return axios.get(`${funcParamURL}`);
-      }
-
 function ResetEmail() {
 
     const [email, setEmail] = useState('');
-
+    const [resetStatus, setResetStatus] = useState('');
     
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -19,13 +16,13 @@ function ResetEmail() {
             email: email
         }
 
-        axios.post("http://localhost:5000/reset_send_email", {
+        axios.post("http://localhost:5000/reset_send_email", registerPayload, {
             headers: {
                 "Content-Type": "application/json"
             },
-            registerPayload})
+            })
             .then(response => {
-                console.log(response)
+                setResetStatus(response.data);
                 setEmail('');
             })
             .catch(err => {
@@ -49,8 +46,12 @@ function ResetEmail() {
                         </div>
                     </div>
                     <div className="footer">
-                        <Button variant="Primary" type="submit" className="btn">Wyślij Link do Reset</Button>
+                        <Button variant="Primary" type="submit" className="btn">Wyślij Reset Hasła</Button>
+                        <Link to='/login'>
+                            <Button variant="Primary" className="btn">Powrót do logowania</Button>
+                        </Link>
                     </div>
+                    <p>{resetStatus}</p>
                 </form>
             </div></>
     );
