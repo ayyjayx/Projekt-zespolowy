@@ -1,92 +1,14 @@
 from datetime import datetime, timezone, timedelta
 
 from config import Config
-from flask import jsonify, make_response, render_template_string, request, flash
+from flask import jsonify, make_response, render_template_string, request
 from flask_cors import cross_origin
-from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                get_jwt, get_jwt_identity, jwt_required,
-                                unset_jwt_cookies)
+from flask_jwt_extended import (create_access_token, get_jwt, get_jwt_identity,
+                                jwt_required)
 from flask_mail import Mail, Message
 from models import Account, ResetToken
 
-
-def init_routes(app):
-    @app.route("/loggedhome", methods=["GET", "POST"])
-    def home():
-        data = request.get_data()
-        return jsonify(data)
-
-    @app.route("/registration", methods=["GET", "POST"])
-    def registration():
-        if request.method == "POST":
-            data = request.get_json()
-            username = data.get("username")
-            email = data.get("email")
-            password = data.get("password")
-            passwordRepeat = data.get("passwordRepeat")
-
-            if not username or not password or not email or not passwordRepeat:
-                return make_response("Missing data.", 202)
-
-            if len(password) < 4:
-                return make_response("Password must be at least 4 characters long.", 202)
-
-            if password == passwordRepeat:
-                username_exists = Account.query.filter_by(username=username).first()
-                email_exists = Account.query.filter_by(email=email).first()
-                if not username_exists:
-                    if not email_exists:
-                        new_account = Account(username=username, email=email)
-                        new_account.set_password(password)
-                        new_account.save()
-                        return make_response(
-                            "Successfully registered new user. Proceed to Log in.", 201
-                        )
-                    else:
-                        return make_response(
-                            "Email already in use.", 202
-                        )
-                else:
-                    return make_response("Username already in use.", 202)
-            else:
-                return make_response("Passwords do not match.", 202)
-        else:
-            return make_response("Use POST method.", 200)
-
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":
-            data = request.get_json()
-            username = data.get("username")
-            password = data.get("password")
-
-            if not username or not password:
-                return make_response("Missing data.", 201)
-
-            account = Account.query.filter_by(username=username).first()
-
-            if not account:
-                return make_response("User does not exist.", 201)
-
-            if account.check_password(password):
-                access_token = create_access_token(identity=account.id)
-                refresh_token = create_refresh_token(identity=account.id)
-                response = jsonify(
-                    access_token=access_token, refresh_token=refresh_token
-                )
-                return response
-
-            return make_response("Wrong password.", 201)
-        else:
-            return make_response("Use POST", 201)
-
-    @app.route("/logout", methods=["GET", "POST"])
-    @jwt_required()
-    def logout():
-        response = make_response("Token expired.", 200)
-        unset_jwt_cookies(response)
-        return response
-
+def init(app):
     @app.route("/profile", methods=["GET"])
     @jwt_required()
     def show_account():
@@ -155,7 +77,7 @@ def init_routes(app):
             ),
             201,
         )
-    
+
     @app.route("/profile/update/password", methods=["GET", "POST"])
     @jwt_required()
     def update_password():
@@ -182,7 +104,6 @@ def init_routes(app):
         else:
             return make_response("Wrong current password.", 201)
 
-
     @app.route("/profile/delete", methods=["DELETE"])
     @jwt_required()
     def delete_account():
@@ -195,16 +116,6 @@ def init_routes(app):
 
         return make_response("User successfully deleted.", 200)
 
-    @app.route("/refresh", methods=["POST"])
-    @jwt_required(refresh=True)
-    def refresh():
-        dane = request.headers["Authorization"]
-        current_user = get_jwt_identity()
-        account = Account.query.get(current_user)
-        access_token = create_access_token(identity=account.id)
-        response = jsonify(access_token=access_token)
-        return response
-
     @app.route("/reset_send_email", methods=["GET", "POST"])
     def reset():
         try:
@@ -212,8 +123,7 @@ def init_routes(app):
             email = data.get("email")
             account = Account.query.filter_by(email=email).first()
 
-            expiration = timedelta(hours=1)
-            reset_token = create_access_token(identity=account.id, expires_delta=expiration)
+            reset_token = create_access_token(identity=account.id)
             newResetToken = ResetToken(username=account.username, token=reset_token)
             newResetToken.save()
 
@@ -236,6 +146,7 @@ def init_routes(app):
                             <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
                             <p>Żeby zresetować hasło kliknij w poniższy link:</p>
                             <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
+                            <p>Link będzie aktywny przez 1h</p>
                             <p>have fun baby,</p>
                             <p>The Szaszki Team</p>
                         </body>
@@ -265,15 +176,20 @@ def init_routes(app):
             data = request.get_json()
             token = data.get('token')
             email = data.get('email')
-
-            if not token:
-                return jsonify({"msg": "Reset token not found."})
             
             reset_token = ResetToken.query.filter_by(token=token).first()
+
+            expiration_time = timedelta(hours=1)
+            current_time = datetime.utcnow()
+
             if reset_token:
                 reset_token.delete()
             else:
                 return jsonify({"msg": "Access to reset link has expired."})
+            
+            if current_time - reset_token.created_at > expiration_time:
+                reset_token.delete()
+                return jsonify({"msg": "Reset token has expired."})
             
             account = Account.query.filter_by(email=email).first()
             if not account:
@@ -295,3 +211,4 @@ def init_routes(app):
 
             else:
                 return jsonify({"msg": "Passwords do not match."})
+
