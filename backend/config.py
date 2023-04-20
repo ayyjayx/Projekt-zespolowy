@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+
 class Config:
     DEBUG = False
     TESTING = False
@@ -23,6 +24,7 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_COOKIE_SECURE = False
 
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database:5432/postgres"
@@ -31,6 +33,4 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-    SQLALCHEMY_BINDS = {
-        "temporary": "sqlite:///:memory:"
-    }
+    SQLALCHEMY_BINDS = {"temporary": "sqlite:///:memory:"}

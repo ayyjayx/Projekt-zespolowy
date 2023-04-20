@@ -99,7 +99,7 @@ def init_routes(app):
             return make_response("Access token expired", 200)
         
         if not account:
-            return make_response("Użytkownik nie istnieje.", 404)
+            return make_response("Account does not exist.", 404)
 
         return (
             jsonify(
@@ -172,7 +172,7 @@ def init_routes(app):
 
         account.delete()
 
-        return make_response("Konto pomyślnie usunięte.", 200)
+        return make_response("Account successfully deleted.", 200)
 
     @app.route("/refresh", methods=["POST"])
     @jwt_required(refresh=True)
