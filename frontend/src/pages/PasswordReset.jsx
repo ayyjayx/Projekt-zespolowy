@@ -1,28 +1,61 @@
-import React, { useState }from 'react';
+import React, { useEffect, useState }from 'react';
 import axios from 'axios';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
+
+export const setAuthToken = token => {
+    if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+    else
+        delete axios.defaults.headers.common["Authorization"];
+}
 
 function PasswordReset() {
 
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
     const [resetStatus, setResetStatus] = useState('');
+
     const emailMatch = window.location.href.match(/email=([^&]+)/);
     const email = emailMatch ? emailMatch[1] : '';
+    const tokenMatch = window.location.href.match(/token=([^&]+)/);
+    const token = tokenMatch ? tokenMatch[1] : '';
+
+    const url = `http://localhost:5000/reset_password?token=${token}&email=${email}`;
+
+    useEffect(() => {
+        axios.get(url, {
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': 'Bearer ' + token,
+            }
+        })
+            .then(response => {
+                console.log(response.data)
+            })
+            .catch(err => { console.log(err) });
+    },
+        []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const registerPayload = {
+        const resetPayload = {
+            email: email,
             password: password,
-            passwordRepeat: passwordRepeat
+            passwordRepeat: passwordRepeat,
+            token: token
         }
-        axios.post("http://localhost:5000/reset_password" + email, registerPayload)
+        axios.post("http://localhost:5000/reset_password", resetPayload )
             .then(response => {
+                console.log(email);
+                console.log(token);
                 setPassword('');
                 setPasswordRepeat('');
-                setResetStatus(response.data);
+                setResetStatus(response.data.msg);
+                console.log(response.data);
+                setAuthToken(token);
             })
             .catch(err => {
                 console.log(err)
