@@ -17,3 +17,6 @@ database-test
 
 # Ignore python venv
 venv
+
+# coverage raport
+.coverage
