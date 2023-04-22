@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from routes import init_routes
 from config import DevelopmentConfig
 

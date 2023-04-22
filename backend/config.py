@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+
 class Config:
     DEBUG = False
     TESTING = False
@@ -16,12 +17,20 @@ class Config:
     MAIL_PASSWORD = '59478b0bd8b607'
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    SERVER_NAME = 'localhost:5000'
+
+    JWT_SECRET_KEY = "super-secret"
+    JWT_TOKEN_LOCATION = "cookies"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_COOKIE_SECURE = False
+
 
 class DevelopmentConfig(Config):
+    SERVER_NAME = 'localhost:5000'
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database:5432/postgres"
 
+
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database-test:5432/postgres"
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_BINDS = {"temporary": "sqlite:///:memory:"}
