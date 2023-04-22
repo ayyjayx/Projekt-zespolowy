@@ -26,10 +26,10 @@ def init_routes(app):
             passwordRepeat = data.get("passwordRepeat")
 
             if not username or not password or not email or not passwordRepeat:
-                return make_response("Brak danych", 202)
+                return make_response("Missing data", 202)
 
             if len(password) < 4:
-                return make_response("Hasło musi mieć co najmniej 4 znaki!", 202)
+                return make_response("Password must be >=4 characters long", 202)
 
             if password == passwordRepeat:
                 username_exists = Account.query.filter_by(username=username).first()
@@ -40,16 +40,16 @@ def init_routes(app):
                         new_account.set_password(password)
                         new_account.save()
                         return make_response(
-                            "Rejestracja ukończona pomyślnie. Zaloguj się", 201
+                            "Successfully registered.", 201
                         )
                     else:
                         return make_response(
                             "Ten email jest już przypisany do konta", 202
                         )
                 else:
-                    return make_response("Ta nazwa użytkownika jest już zajęta", 202)
+                    return make_response("Account already exists.", 202)
             else:
-                return make_response("Hasła różnią się od siebie", 202)
+                return make_response("Passwords do not match", 202)
         else:
             return make_response("Use POST method", 200)
 
@@ -61,12 +61,12 @@ def init_routes(app):
             password = data.get("password")
 
             if not username or not password:
-                return make_response("Brak danych.", 201)
+                return make_response("Missing data.", 201)
 
             account = Account.query.filter_by(username=username).first()
 
             if not account:
-                return make_response("Konto nie istnieje.", 201)
+                return make_response("Account does not exist.", 200)
 
             if account.check_password(password):
                 access_token = create_access_token(identity=account.id)
@@ -76,7 +76,7 @@ def init_routes(app):
                 )
                 return response
 
-            return make_response("Niepoprawne hasło.", 201)
+            return make_response("Incorrect Password.", 200)
         else:
             return make_response("Use POST", 201)
 

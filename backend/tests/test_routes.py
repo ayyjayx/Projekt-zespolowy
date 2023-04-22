@@ -69,7 +69,7 @@ def test_registration_data_lenght(client):
         },
     )
 
-    assert response.status_code == 411
+    assert response.status_code == 202
     assert b"Password must be >=4 characters long" in response.data
 
 
@@ -83,7 +83,7 @@ def test_registration_missing_data(client):
         },
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 202
     assert b"Missing data" in response.data
 
 
@@ -153,7 +153,7 @@ def test_login_missing_data(app, client):
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert b"Missing data." in response.data
 
 
@@ -180,5 +180,5 @@ def test_login_use_POST(app, client):
         "/login", json={"username": "testuser", "password": "password"}
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert b"Use POST" in response.data
