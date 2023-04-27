@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from config import Config
 from flask import jsonify, make_response, render_template_string, request
@@ -7,7 +7,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token,
                                 get_jwt, get_jwt_identity, jwt_required,
                                 unset_jwt_cookies)
 from flask_mail import Mail, Message
-from models import Account
+from models import Account, ResetToken
 
 
 def init_routes(app):
@@ -191,6 +191,10 @@ def init_routes(app):
             email = data.get("email")
             account = Account.query.filter_by(email=email).first()
 
+            reset_token = create_access_token(identity=account.id)
+            newResetToken = ResetToken(username=account.username, token=reset_token)
+            newResetToken.save()
+
             with app.app_context():
                 mail = Mail(app)
                 msg = Message()
@@ -209,46 +213,69 @@ def init_routes(app):
                             <p>Drogi Użytkowniku {{ account }},</p>
                             <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
                             <p>Żeby zresetować hasło kliknij w poniższy link:</p>
-                            <p><a href="http://localhost:3000/reset_password?email={{email}}">Resetuj Hasło</a></p>
+                            <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
+                            <p>Link będzie aktywny przez 1h</p>
                             <p>have fun baby,</p>
                             <p>The Szaszki Team</p>
                         </body>
                         </html>
                     """,
                     account=account.username,
-                    email=email,
+                    token=reset_token,
+                    email=email
                 )
                 mail.send(msg)
 
-            return make_response("Email został wysłany.", 201)
+            return make_response("Email has been sent.", 201)
         except:
-            return make_response("Błąd podczas wysyłania maila.", 230)
+            return make_response("Could not send email.", 230)
 
-    @app.route("/reset_password<email>", methods=["GET", "POST"])
-    def reset_password(email):
-        if request.method == "POST":
+    @app.route("/reset_password", methods=["GET", "POST"])
+    @cross_origin()
+    def reset_password():
+        token = None
 
+        if request.method == "GET":
+            token = request.args.get("token")
+            email = request.args.get("email")
+            return jsonify({"msg": "successfully got url params."})
+
+        else:
+            data = request.get_json()
+            token = data.get('token')
+            email = data.get('email')
+            
+            reset_token = ResetToken.query.filter_by(token=token).first()
+
+            expiration_time = timedelta(hours=1)
+            current_time = datetime.utcnow()
+
+            if reset_token:
+                reset_token.delete()
+            else:
+                return jsonify({"msg": "Access to reset link has expired."})
+            
+            if current_time - reset_token.created_at > expiration_time:
+                reset_token.delete()
+                return jsonify({"msg": "Reset token has expired."})
+            
             account = Account.query.filter_by(email=email).first()
             if not account:
-                return make_response("Użytkownik o tym emailu nie istnieje.", 205)
+                return jsonify({"msg": "User does not exist."})
 
-            data = request.get_json()
             new_password = data.get("password")
             new_passwordR = data.get("passwordRepeat")
 
             if not new_password or not new_passwordR:
-                return make_response("Brak danych", 202)
+                return jsonify({"msg": "Missing data."})
 
             if len(new_password) < 4:
-                return make_response("Hasło musi mieć co najmniej 4 znaki!", 202)
+                return jsonify({"msg": "Password must be at least 4 characters long."})
 
             if new_password == new_passwordR:
                 account.update_password(new_password)
                 account.save()
-                return make_response("Hasło zostało pomyślnie zmienione.", 201)
+                return jsonify({"msg": "Password successfully updated."})
 
             else:
-                return make_response("Hasła są różne.", 280)
-
-        else:
-            return jsonify("Proceed to password reset."), 200
+                return jsonify({"msg": "Passwords do not match."})

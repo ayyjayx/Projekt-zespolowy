@@ -5,16 +5,22 @@ from werkzeug.security import check_password_hash, generate_password_hash
 db = SQLAlchemy()
 
 
-class JWTTokenBlocklist(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    jwt_token = db.Column(db.String(), nullable=False)
-    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+class ResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    token = db.Column(db.String(1000), nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
 
-    def __repr__(self):
-        return f"Expired Token: {self.jwt_token}"
+    def __init__(self, username, token):
+        self.username = username
+        self.token = token
 
     def save(self):
         db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
         db.session.commit()
 
 
@@ -22,7 +28,7 @@ class Account(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(50), nullable=False, unique=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
-    password = db.Column(db.String(256), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     created_on = db.Column(db.DateTime(), default=datetime.utcnow)
     admin = db.Column(db.Boolean(), default=False)
 
