@@ -1,7 +1,8 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from config import Config
-from flask import jsonify, make_response, render_template_string, request, flash
+from flask import (flash, jsonify, make_response, render_template_string,
+                   request)
 from flask_cors import cross_origin
 from flask_jwt_extended import (create_access_token, create_refresh_token,
                                 get_jwt, get_jwt_identity, jwt_required,
@@ -18,7 +19,7 @@ def init_routes(app):
 
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
-        if request.method == 'POST':
+        if request.method == "POST":
             data = request.get_json()
             username = data.get("username")
             email = data.get("email")
@@ -39,13 +40,9 @@ def init_routes(app):
                         new_account = Account(username=username, email=email)
                         new_account.set_password(password)
                         new_account.save()
-                        return make_response(
-                            "Successfully registered.", 201
-                        )
+                        return make_response("Successfully registered.", 201)
                     else:
-                        return make_response(
-                            "Email already in use.", 202
-                        )
+                        return make_response("Email already in use.", 202)
                 else:
                     return make_response("Account already exists.", 202)
             else:
@@ -97,7 +94,7 @@ def init_routes(app):
 
         if now_timestamp > exp_timestamp:
             return make_response("Access token expired.", 200)
-        
+
         if not account:
             return make_response("User does not exist.", 404)
 
@@ -135,7 +132,9 @@ def init_routes(app):
 
             if account.check_password(password):
                 if new_username != "":
-                    username_exists = Account.query.filter_by(username=new_username).first()
+                    username_exists = Account.query.filter_by(
+                        username=new_username
+                    ).first()
                     if not username_exists:
                         account.update_username(new_username)
 
@@ -155,7 +154,7 @@ def init_routes(app):
             ),
             201,
         )
-    
+
     @app.route("/profile/update/password", methods=["GET", "POST"])
     @jwt_required()
     def update_password():
@@ -168,11 +167,13 @@ def init_routes(app):
 
         if not account:
             return make_response("User does not exist.", 201)
-        
+
         if account.check_password(password):
             if len(new_password) < 4:
-                return make_response("Password must be at least 4 characters long.", 202)
-            
+                return make_response(
+                    "Password must be at least 4 characters long.", 202
+                )
+
             if new_password == new_password_repeat:
                 account.update_password(new_password)
                 account.save()
@@ -181,7 +182,6 @@ def init_routes(app):
                 return make_response("Passwords do not match.", 201)
         else:
             return make_response("Wrong current password.", 201)
-
 
     @app.route("/profile/delete", methods=["DELETE"])
     @jwt_required()
@@ -213,7 +213,9 @@ def init_routes(app):
             account = Account.query.filter_by(email=email).first()
 
             expiration = timedelta(hours=1)
-            reset_token = create_access_token(identity=account.id, expires_delta=expiration)
+            reset_token = create_access_token(
+                identity=account.id, expires_delta=expiration
+            )
             newResetToken = ResetToken(username=account.username, token=reset_token)
             newResetToken.save()
 
@@ -236,6 +238,7 @@ def init_routes(app):
                             <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
                             <p>Żeby zresetować hasło kliknij w poniższy link:</p>
                             <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
+                            <p>Link będzie aktywny przez 1h</p>
                             <p>have fun baby,</p>
                             <p>The Szaszki Team</p>
                         </body>
@@ -243,7 +246,7 @@ def init_routes(app):
                     """,
                     account=account.username,
                     token=reset_token,
-                    email=email
+                    email=email,
                 )
                 mail.send(msg)
 
@@ -263,18 +266,23 @@ def init_routes(app):
 
         else:
             data = request.get_json()
-            token = data.get('token')
-            email = data.get('email')
+            token = data.get("token")
+            email = data.get("email")
 
-            if not token:
-                return jsonify({"msg": "Reset token not found."})
-            
             reset_token = ResetToken.query.filter_by(token=token).first()
+
+            expiration_time = timedelta(hours=1)
+            current_time = datetime.utcnow()
+
             if reset_token:
                 reset_token.delete()
             else:
                 return jsonify({"msg": "Access to reset link has expired."})
-            
+
+            if current_time - reset_token.created_at > expiration_time:
+                reset_token.delete()
+                return jsonify({"msg": "Reset token has expired."})
+
             account = Account.query.filter_by(email=email).first()
             if not account:
                 return jsonify({"msg": "User does not exist."})
