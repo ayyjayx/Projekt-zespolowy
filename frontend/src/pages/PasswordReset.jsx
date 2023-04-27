@@ -4,14 +4,6 @@ import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
 
-export const setAuthToken = token => {
-    if (token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-    else
-        delete axios.defaults.headers.common["Authorization"];
-}
-
 function PasswordReset() {
 
     const [password, setPassword] = useState('');
@@ -26,12 +18,7 @@ function PasswordReset() {
     const url = `http://localhost:5000/reset_password?token=${token}&email=${email}`;
 
     useEffect(() => {
-        axios.get(url, {
-            headers: {
-                "Content-Type": "application/json",
-                'Authorization': 'Bearer ' + token,
-            }
-        })
+        axios.get(url)
             .then(response => {
                 console.log(response.data)
             })
@@ -55,7 +42,6 @@ function PasswordReset() {
                 setPasswordRepeat('');
                 setResetStatus(response.data.msg);
                 console.log(response.data);
-                setAuthToken(token);
             })
             .catch(err => {
                 console.log(err)
