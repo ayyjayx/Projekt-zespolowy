@@ -4,14 +4,6 @@ import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import './style.css'
 
-export const setAuthToken = token => {
-    if (token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-    else
-        delete axios.defaults.headers.common["Authorization"];
-}
-
 function PasswordReset() {
 
     const [password, setPassword] = useState('');
