@@ -1,15 +1,85 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from config import Config
 from flask import jsonify, make_response, render_template_string, request
 from flask_cors import cross_origin
-from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                get_jwt, get_jwt_identity, jwt_required,
-                                unset_jwt_cookies, get_csrf_token, set_access_cookies, set_refresh_cookies)
+from flask_jwt_extended import (create_access_token, create_refresh_token,get_jwt_identity,
+                                jwt_required, unset_jwt_cookies, set_access_cookies,
+                                set_refresh_cookies)
 from flask_mail import Mail, Message
-from models import Account, ResetToken
+from models import Account, ResetToken, Game, Player
+import chess
 
 def init_routes(app):
+    @app.route("/game", methods=["POST", "GET"])
+    @jwt_required()
+    def newgame_auth():
+        current_user = get_jwt_identity()
+        game_id = request.args.get("game_id")
+
+        game_exists = Game.query.filter_by(id=game_id).first()
+        if game_exists:
+            return jsonify({"id": game_id})
+
+        else:
+            board = chess.Board()
+            new_game = Game(
+                id = game_id,
+                fen = board.fen(),
+                player_one_id = current_user
+            )
+            new_game.save()
+            new_player = Player(
+                player_id = current_user,
+                game_id = new_game.id
+            )
+            new_player.save()
+        
+        return jsonify({"id": game_id})
+    
+    @app.route("/noauth/game", methods=["POST", "GET"])
+    def newgame(game_id):
+        board = chess.Board()
+        game_id = request.args.get("game_id")
+
+        game_exists = Game.query.filter_by(id=game_id).first()
+        if game_exists:
+            return jsonify({"id": game_id})
+
+        else:
+            new_game = Game(
+                id = game_id,
+                fen = board.fen()
+            )
+            new_game.save()
+        
+        return jsonify({"id": game_id})
+
+    @app.route("/game/move", methods=["POST"])
+    def savegame():
+        # call on this after every move
+        # if game_id passed in url:
+        # game_id = request.args.get("game_id")
+        data = request.get_json()
+        move = data.get("move") # in uci
+        game_id = data.get("gameId")
+        game = Game.query.filter_by(id=game_id).first()
+        fen = game.fen
+
+        board = chess.Board(fen)
+        if chess.Move.from_uci(move) in board.legal_moves:
+            board.push_uci(move)
+            fen = board.fen()
+        else:
+            return jsonify({"move": "illegal"})
+        
+        # add the rest of move checking
+  
+        game.update_fen(fen)
+        game.save()
+
+        return jsonify({"move": "successful", "next legal": board.legal_moves()})
+
     @app.route("/loggedhome", methods=["GET", "POST"])
     def home():
         data = request.get_data()

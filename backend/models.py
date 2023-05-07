@@ -67,6 +67,10 @@ class Player(db.Model):
     player_game_id_fkey = db.relationship("Game", foreign_keys="Player.game_id")
     player_player_id_fkey = db.relationship("Account", foreign_keys="Player.player_id")
 
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
 
 class Result(db.Model):
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
@@ -76,34 +80,24 @@ class Result(db.Model):
 
 class Game(db.Model):
     id = db.Column(db.Integer(), primary_key=True, nullable=False)
-    start_time = db.Column(db.DateTime(), nullable=False)
+    start_time = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     end_time = db.Column(db.DateTime(), nullable=True)
-    player_one_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
-    player_two_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
+    fen = db.Column(db.String(), nullable=False)
+    player_one_id = db.Column(db.Integer(), nullable=True)
+    player_two_id = db.Column(db.Integer(), nullable=True)
     result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
 
     game_result_id_fkey = db.relationship("Result", foreign_keys="Game.result_id")
-    game_player_one_id_fkey = db.relationship(
-        "Account", foreign_keys="Game.player_one_id"
-    )
-    game_player_two_id_fkey = db.relationship(
-        "Account", foreign_keys="Game.player_two_id"
-    )
-    
-class ResetToken(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False)
-    token = db.Column(db.String(1000), nullable=False)
-    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+    # game_player_one_id_fkey = db.relationship(
+    #     "Account", foreign_keys="Game.player_one_id"
+    # )
+    # game_player_two_id_fkey = db.relationship(
+    #     "Account", foreign_keys="Game.player_two_id"
+    # )
 
-    def __init__(self, username, token):
-        self.username = username
-        self.token = token
+    def update_fen(self, new_fen):
+        self.fen = new_fen
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
         db.session.commit()
