@@ -1,4 +1,4 @@
-import React, { useEffect, useState }from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
@@ -34,7 +34,7 @@ function PasswordReset() {
             passwordRepeat: passwordRepeat,
             token: token
         }
-        axios.post("http://localhost:5000/reset_password", resetPayload )
+        axios.post("http://localhost:5000/reset_password", resetPayload)
             .then(response => {
                 console.log(email);
                 console.log(token);
