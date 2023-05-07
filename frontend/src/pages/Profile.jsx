@@ -1,34 +1,35 @@
 import React, { useEffect, useState } from "react";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
-import jwt_decode from "jwt-decode";
+// import jwt_decode from "jwt-decode";
 import { hasJWT } from '../utils/hasJWT.jsx';
-import Cookies from 'universal-cookie';
-import { refreshToken } from '../utils/refreshToken.jsx';
+// import Cookies from 'universal-cookie';
 
 
 function Profile() {
-
-    const cookies = new Cookies();
-    const token = cookies.get("access_token");
-    hasJWT() ? "" : window.location.href = '/login';
+    hasJWT();
+    // const cookies = new Cookies();
+    // const token = cookies.get("access_token");
     const [account, setAccount] = useState('');
-    const decoded = jwt_decode(token);
-    const account_id = decoded.id;
+    // const decoded = jwt_decode(token);
+    // const account_id = decoded.id
 
     useEffect(() => {
         axios.get("http://localhost:5000/profile", {
-            headers: {
-                "Content-Type": "application/json",
-                'Authorization': 'Bearer ' + token,
-            },
-            data: { id: account_id },
-        })
-            .then(response => {
-                setAccount(response.data);
-                refreshToken();
+            withCredentials: true
+        },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
             })
-            .catch(err => { console.log(err) });
+            .then(response => {
+                console.log(response.data);
+                setAccount(response.data);
+            })
+            .catch(err => {
+                console.log(err);
+            });
     },
         []);
 

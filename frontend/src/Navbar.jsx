@@ -1,31 +1,26 @@
 import React from "react";
-// import { useState } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { hasJWT } from '../src/utils/hasJWT.jsx';
-import { setAuthToken } from '../src/pages/Login';
 import test from "./assets/test.png";
 import info from "./assets/info.png";
-import Cookies from 'universal-cookie';
+// import Cookies from 'universal-cookie';
 
 
 
-const cookies = new Cookies();
-const token = cookies.get("access_token");
-if (token) {
-    setAuthToken(token);
-}
+// const cookies = new Cookies();
+axios.defaults.withCredentials = true;
+let isLoggedIn;
 
 function LogOut() {
-    setAuthToken(false);
-    cookies.remove("access_token");
-    cookies.remove("refresh_token");
-    window.location.href = '/';
+    axios.post("http://localhost:5000/logout")
+        .then(response => {
+            console.log(response)
+        }).catch(err => console.log(err));
+    window.location.reload(true)
 }
 
 function Navbar() {
-    // const [isLoggedIn, setIsLoggedIn] = useState('');
-    // hasJWT() ? setIsLoggedIn('true') : setIsLoggedIn('false')
-    let isLoggedIn = false;
     hasJWT() ? isLoggedIn = true : isLoggedIn = false;
     return (
         <div className="sidenav">

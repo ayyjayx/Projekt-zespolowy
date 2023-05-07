@@ -1,19 +1,20 @@
 import React from 'react';
-import { setAuthToken } from './Login';
+// import { setAuthToken } from './Login';
 import board from "../assets/board.avif";
-import { hasJWT } from '../utils/hasJWT.jsx';
-import Cookies from 'universal-cookie';
+import { isLoggedIn } from '../utils/isLoggedIn';
+// import { hasJWT } from '../utils/hasJWT.jsx';
+// import Cookies from 'universal-cookie';
 
-const cookies = new Cookies();
-const token = cookies.get("access_token");
-if (token) {
-    setAuthToken(token);
-}
+// const cookies = new Cookies();
+// const token = cookies.get("access_token");
+// if (token) {
+//     setAuthToken(token);
+// }
 
 function LoggedHome() {
-    if (!hasJWT()) {
-        window.location.href = "/"
-    }
+    isLoggedIn() ? '' : window.location.href = '/';
+    // hasJWT() ? '' : window.location.href = '/';
+    // console.log(hasJWT());
     return (
         <>
             <header className='App-header'>szaszki.pl</header>

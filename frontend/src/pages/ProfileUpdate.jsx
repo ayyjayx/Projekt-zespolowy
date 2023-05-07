@@ -3,46 +3,36 @@ import Button from 'react-bootstrap/Button'
 import axios from 'axios';
 import { Link } from "react-router-dom";
 import { hasJWT } from '../utils/hasJWT.jsx';
-import jwt_decode from "jwt-decode";
+// import jwt_decode from "jwt-decode";
 import './style.css'
 import Cookies from 'universal-cookie';
-import { refreshToken } from '../utils/refreshToken.jsx';
 
 
 function ProfileUpdate() {
-    hasJWT() ? "" : window.location.href = '/login';
+    hasJWT();
     const cookies = new Cookies();
-    const token = cookies.get("access_token");
     const [account, setAccount] = useState('');
-    const decoded = jwt_decode(token);
-    const account_id = decoded.id;
 
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [updateStatus, setUpdateStatus] = useState('');
 
+    axios.defaults.withCredentials = true;
+
     useEffect(() => {
-        axios.get("http://localhost:5000/profile", {
+        axios.get("http://localhost:5000/profile",
+            {
+                withCredentials: true
+            }, {
             headers: {
                 "Content-Type": "application/json"
             },
-            data: { id: account_id },
         })
             .then(response => {
                 setAccount(response.data);
             })
-            .catch(err => {
-                console.log(err);
-                if (err.response.data.msg == "Token has expired") {
-                    try {
-                        refreshToken();
-                    }
-                    catch {
-                        console.error("error");
-                    }
-                }
-            });
+            .catch(err => { console.log(err); });
     },
         []);
 
@@ -55,11 +45,10 @@ function ProfileUpdate() {
             password: password
         }
 
-        axios.post("http://localhost:5000/profile/update", {
+        axios.post("http://localhost:5000/profile/update", updatePayload, {
             headers: {
-                "Content-Type": "application/json"
+                "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
             },
-            updatePayload
         })
             .then(response => {
                 setUpdateStatus(response.data);

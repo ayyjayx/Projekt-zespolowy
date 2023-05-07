@@ -2,19 +2,8 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
-import Cookies from 'universal-cookie';
-
-
-export const setAuthToken = token => {
-    if (token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-    else
-        delete axios.defaults.headers.common["Authorization"];
-}
 
 function Login() {
-    const cookies = new Cookies();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loginStatus, setLoginStatus] = useState('');
@@ -26,17 +15,15 @@ function Login() {
             password: password,
         }
 
-        axios.post("http://localhost:5000/login", loginPayload)
+        axios.post("http://localhost:5000/login", loginPayload, {
+            withCredentials: true,
+        })
             .then(response => {
                 if (response.status === 201) {
                     setLoginStatus(response.data);
                 }
                 else {
-                    const access_token = response.data.access_token;
-                    const refresh_token = response.data.refresh_token;
-                    cookies.set("access_token", access_token);
-                    cookies.set("refresh_token", refresh_token);
-                    setAuthToken(access_token);
+                    console.log(response.headers);
                     window.location.href = '/loggedhome';
                 }
             }).catch(err => console.log(err));
@@ -45,7 +32,7 @@ function Login() {
     const handleReset = () => {
         window.location.href = 'reset_send_email'
     };
-    
+
     return (
         <><header className="App-header">
             szaszki.pl
