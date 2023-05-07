@@ -1,24 +1,27 @@
 import React from 'react';
-import Button from 'react-bootstrap/Button';
-import { Link } from "react-router-dom";
-import { hasJWT } from '../utils/hasJWT.jsx';
+import 'chessboard-element';
+import './style.css';
+// import { isLoggedIn } from '../utils/isLoggedIn';
+import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
+import { hasJWT } from '../utils/hasJWT';
+
 
 function Home() {
-    hasJWT() ? window.location.href = '/loggedhome' : '';
+    hasJWT();
+    onlyAllowLegalMoves();
 
     return (
-        <>
-            <div className="center">
-                <h1>tu kiedyś będą szaszki</h1>
-                <h2>Jesteś nie zalogowany</h2>
-                <Link to='/login'>
-                    <Button variant="Primary">Logowanie</Button>
-                </Link>
-                <Link to='/registration'>
-                    <Button variant="Primary">Rejestracja</Button>
-                </Link>
-            </div>
-        </>
+        <div className='center'>
+            <h2>Jesteś nie zalogowany</h2>
+            <chess-board
+                position="start"
+                orientation={React.flipped ? 'black' : 'white'}
+                draggable-pieces
+                ref={(e) => React.board = e}
+            >
+            </chess-board>
+            <button onClick={() => React.board.flip()}>Flip Board</button>
+        </div>
     );
 }
 

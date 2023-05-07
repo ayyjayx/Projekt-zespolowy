@@ -5,10 +5,9 @@ from flask import jsonify, make_response, render_template_string, request
 from flask_cors import cross_origin
 from flask_jwt_extended import (create_access_token, create_refresh_token,
                                 get_jwt, get_jwt_identity, jwt_required,
-                                unset_jwt_cookies)
+                                unset_jwt_cookies, get_csrf_token, set_access_cookies, set_refresh_cookies)
 from flask_mail import Mail, Message
 from models import Account, ResetToken
-
 
 def init_routes(app):
     @app.route("/loggedhome", methods=["GET", "POST"])
@@ -74,16 +73,19 @@ def init_routes(app):
                 response = jsonify(
                     access_token=access_token, refresh_token=refresh_token
                 )
+                response = jsonify({'login': True})
+                set_access_cookies(response, access_token)
+                set_refresh_cookies(response, refresh_token)
+                
                 return response
 
             return make_response("Incorrect Password.", 200)
         else:
             return make_response("Use POST", 201)
 
-    @app.route("/logout", methods=["GET", "POST"])
-    @jwt_required()
+    @app.route("/logout", methods=["POST"])
     def logout():
-        response = make_response("Token expired.", 200)
+        response = jsonify({'logout': True})
         unset_jwt_cookies(response)
         return response
 
@@ -92,11 +94,6 @@ def init_routes(app):
     def show_account():
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
-        exp_timestamp = get_jwt()["exp"]
-        now_timestamp = datetime.timestamp(datetime.now(timezone.utc))
-
-        if now_timestamp > exp_timestamp:
-            return make_response("Access token expired", 200)
         
         if not account:
             return make_response("Account does not exist.", 404)
@@ -110,21 +107,14 @@ def init_routes(app):
                     "created_on": account.created_on,
                 }
             ),
-            200,
+            201,
         )
 
     @app.route("/profile/update", methods=["GET", "POST"])
     @jwt_required()
-    @cross_origin()
+    @cross_origin(supports_credentials=True)
     def edit_account():
-        data = request.get_json()
-        exp_timestamp = get_jwt()["exp"]
-        now_timestamp = datetime.timestamp(datetime.now(timezone.utc))
-        if now_timestamp > exp_timestamp:
-            return make_response("Access token expired", 200)
-
-        id = data.get("id")
-        payload = data.get("updatePayload")
+        payload = request.get_json()
         id = payload.get("id")
         new_username = payload.get("username")
         new_email = payload.get("email")
@@ -141,17 +131,22 @@ def init_routes(app):
 
             if account.check_password(password):
                 if new_username != "":
-                    username_exists = Account.query.get(username=new_username)
+                    username_exists = Account.query.filter_by(username=new_username).first()
                     if not username_exists:
                         account.update_username(new_username)
+                    else:
+                        return make_response("User already exists")
 
                 if new_email != "":
-                    email_exists = Account.query.get(username=new_email)
+                    email_exists = Account.query.filter_by(email=new_email).first()
                     if not email_exists:
                         account.update_email(new_email)
+                    else:
+                        return make_response("Email already used")
 
                 account.save()
-                return make_response("Dane konta zaktualizowane", 200)
+                response = make_response("Dane konta zaktualizowane", 200)
+                return response
 
             return make_response("Niepoprawne hasło.", 201)
 
@@ -164,6 +159,7 @@ def init_routes(app):
 
     @app.route("/profile/delete", methods=["DELETE"])
     @jwt_required()
+    @cross_origin(supports_credentials=True)
     def delete_account():
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
@@ -177,11 +173,11 @@ def init_routes(app):
     @app.route("/refresh", methods=["POST"])
     @jwt_required(refresh=True)
     def refresh():
-        dane = request.headers["Authorization"]
         current_user = get_jwt_identity()
-        account = Account.query.get(current_user)
-        access_token = create_access_token(identity=account.id)
-        response = jsonify(access_token=access_token)
+        # account = Account.query.get(current_user)
+        access_token = create_access_token(identity=current_user)
+        response = jsonify({'refresh': True})
+        set_access_cookies(response, access_token)
         return response
 
     @app.route("/reset_send_email", methods=["GET", "POST"])
@@ -214,7 +210,6 @@ def init_routes(app):
                             <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
                             <p>Żeby zresetować hasło kliknij w poniższy link:</p>
                             <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
-                            <p>Link będzie aktywny przez 1h</p>
                             <p>have fun baby,</p>
                             <p>The Szaszki Team</p>
                         </body>
@@ -279,3 +274,8 @@ def init_routes(app):
 
             else:
                 return jsonify({"msg": "Passwords do not match."})
+
+    @app.route("/check_auth", methods=["GET"])
+    @jwt_required()
+    def checking():
+        return jsonify(auth=True)

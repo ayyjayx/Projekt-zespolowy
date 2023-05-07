@@ -89,3 +89,21 @@ class Game(db.Model):
     game_player_two_id_fkey = db.relationship(
         "Account", foreign_keys="Game.player_two_id"
     )
+    
+class ResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    token = db.Column(db.String(1000), nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    def __init__(self, username, token):
+        self.username = username
+        self.token = token
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()

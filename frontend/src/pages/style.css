@@ -102,3 +102,8 @@ body{
 .center-text {
     text-align: center;
 }
+
+chess-board {
+    position: relative;
+    width: 400px;
+}
