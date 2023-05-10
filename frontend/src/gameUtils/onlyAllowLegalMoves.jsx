@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
+import axios from "axios";
 
-export function onlyAllowLegalMoves() {
+export function onlyAllowLegalMoves(gameId) {
     const game = new Chess();
 
     useEffect(() => {
@@ -31,11 +32,18 @@ export function onlyAllowLegalMoves() {
 
             // see if the move is legal
             try {
-                game.move({
+                const move = game.move({
                     from: source,
                     to: target,
                     promotion: 'q' // always promote to a queen for simplicity
                 });
+
+                if (move) {
+                    axios.post('http://localhost:5000/game/move', {
+                        gameId: gameId,
+                        move: move.uci()
+                    });
+                }
             } catch {
                 setAction('snapback');
             }

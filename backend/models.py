@@ -59,19 +59,6 @@ class Account(db.Model):
         db.session.commit()
 
 
-class Player(db.Model):
-    id = db.Column(db.Integer(), nullable=False, primary_key=True)
-    player_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
-    game_id = db.Column(db.Integer(), db.ForeignKey("game.id"), nullable=False)
-
-    player_game_id_fkey = db.relationship("Game", foreign_keys="Player.game_id")
-    player_player_id_fkey = db.relationship("Account", foreign_keys="Player.player_id")
-
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-
-
 class Result(db.Model):
     id = db.Column(db.Integer(), nullable=False, primary_key=True)
     description = db.Column(db.String(128), nullable=True)
@@ -79,7 +66,7 @@ class Result(db.Model):
 
 
 class Game(db.Model):
-    id = db.Column(db.Integer(), primary_key=True, nullable=False)
+    id = db.Column(db.String(32), primary_key=True, unique=True, nullable=False)
     start_time = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     end_time = db.Column(db.DateTime(), nullable=True)
     fen = db.Column(db.String(), nullable=False)
@@ -88,12 +75,6 @@ class Game(db.Model):
     result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
 
     game_result_id_fkey = db.relationship("Result", foreign_keys="Game.result_id")
-    # game_player_one_id_fkey = db.relationship(
-    #     "Account", foreign_keys="Game.player_one_id"
-    # )
-    # game_player_two_id_fkey = db.relationship(
-    #     "Account", foreign_keys="Game.player_two_id"
-    # )
 
     def update_fen(self, new_fen):
         self.fen = new_fen

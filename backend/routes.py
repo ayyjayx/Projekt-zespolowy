@@ -7,62 +7,28 @@ from flask_jwt_extended import (create_access_token, create_refresh_token,get_jw
                                 jwt_required, unset_jwt_cookies, set_access_cookies,
                                 set_refresh_cookies)
 from flask_mail import Mail, Message
-from models import Account, ResetToken, Game, Player
+from models import Account, ResetToken, Game
 import chess
+import uuid
 
 def init_routes(app):
-    @app.route("/game", methods=["POST", "GET"])
-    @jwt_required()
-    def newgame_auth():
-        current_user = get_jwt_identity()
-        game_id = request.args.get("game_id")
+    @app.route("/creategame", methods=["POST", "GET"]) # tworzenie gry
+    def newgame():
 
-        game_exists = Game.query.filter_by(id=game_id).first()
-        if game_exists:
-            return jsonify({"id": game_id})
-
-        else:
-            board = chess.Board()
-            new_game = Game(
-                id = game_id,
-                fen = board.fen(),
-                player_one_id = current_user
-            )
-            new_game.save()
-            new_player = Player(
-                player_id = current_user,
-                game_id = new_game.id
-            )
-            new_player.save()
-        
-        return jsonify({"id": game_id})
-    
-    @app.route("/noauth/game", methods=["POST", "GET"])
-    def newgame(game_id):
         board = chess.Board()
-        game_id = request.args.get("game_id")
-
-        game_exists = Game.query.filter_by(id=game_id).first()
-        if game_exists:
-            return jsonify({"id": game_id})
-
-        else:
-            new_game = Game(
-                id = game_id,
-                fen = board.fen()
-            )
-            new_game.save()
+        new_game = Game(
+            id = str(uuid.uuid4().hex),
+            fen = board.fen()
+        )
+        new_game.save()
         
-        return jsonify({"id": game_id})
+        return jsonify({"id": new_game.id})
 
-    @app.route("/game/move", methods=["POST"])
-    def savegame():
-        # call on this after every move
-        # if game_id passed in url:
-        # game_id = request.args.get("game_id")
+    @app.route("/game", methods=["POST"]) # gra, link z id, walidacja, zapis itd.
+    def game():
+        game_id = request.args.get("gameId")
         data = request.get_json()
         move = data.get("move") # in uci
-        game_id = data.get("gameId")
         game = Game.query.filter_by(id=game_id).first()
         fen = game.fen
 

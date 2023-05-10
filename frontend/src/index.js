@@ -12,6 +12,7 @@ import ProfileUpdate from './pages/ProfileUpdate';
 import ProfileDelete from './pages/ProfileDelete';
 import PasswordReset from './pages/PasswordReset';
 import ResetEmail from './pages/ResetEmail';
+import Game from './pages/Game';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path ="profile/delete" element={<ProfileDelete />} />
           <Route path ="reset_password" element={<PasswordReset />} />
           <Route path ="reset_send_email" element={<ResetEmail />} />
+          <Route path='game' element={<Game />} />
         </Route>
       </Routes>
     </BrowserRouter>

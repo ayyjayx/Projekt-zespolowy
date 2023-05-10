@@ -1,26 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import 'chessboard-element';
 import './style.css';
 // import { isLoggedIn } from '../utils/isLoggedIn';
-import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
-import { hasJWT } from '../utils/hasJWT';
+// import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
+// import { hasJWT } from '../utils/hasJWT';
+import axios from 'axios';
 
 
 function Home() {
-    hasJWT();
-    onlyAllowLegalMoves();
+    // hasJWT();
+
+    const [loading, setLoading] = useState(false);
+    const handleClick = () => {
+        setLoading(true);
+        axios.get('http://localhost:5000/creategame')
+        .then(response => {
+            const gameId = response.data.id;
+            window.location.href = `/game/${gameId}`;
+        })
+        .finally(() => {
+            setLoading(false);
+        });
+
+    }
 
     return (
         <div className='center'>
             <h2>Jesteś nie zalogowany</h2>
-            <chess-board
-                position="start"
-                orientation={React.flipped ? 'black' : 'white'}
-                draggable-pieces
-                ref={(e) => React.board = e}
-            >
-            </chess-board>
-            <button onClick={() => React.board.flip()}>Flip Board</button>
+
+            <button disabled={loading} onClick={handleClick}> Zagraj tu! </button>
         </div>
     );
 }
