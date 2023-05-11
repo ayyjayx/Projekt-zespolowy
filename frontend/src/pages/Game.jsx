@@ -1,10 +1,12 @@
 import React from 'react';
 import 'chessboard-element';
+import { useParams } from 'react-router-dom';
 import './style.css';
 import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 
 function Game() {
-    onlyAllowLegalMoves();
+    const { gameId } = useParams();
+    onlyAllowLegalMoves(gameId);
 
     return (
         <div className='center'>

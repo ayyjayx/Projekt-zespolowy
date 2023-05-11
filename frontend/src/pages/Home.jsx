@@ -8,7 +8,7 @@ import axios from 'axios';
 
 
 function Home() {
-    // hasJWT();
+    // hasJWT() ? window.location.href = '/loggedhome' : '';
 
     const [loading, setLoading] = useState(false);
     const handleClick = () => {

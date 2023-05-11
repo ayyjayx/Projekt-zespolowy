@@ -18,33 +18,68 @@ def init_routes(app):
         board = chess.Board()
         new_game = Game(
             id = str(uuid.uuid4().hex),
-            fen = board.fen()
+            fen = board.fen(),
+            player_one_id = 0,
         )
         new_game.save()
         
         return jsonify({"id": new_game.id})
 
-    @app.route("/game", methods=["POST"]) # gra, link z id, walidacja, zapis itd.
+    @app.route("/game", methods=["POST"])
     def game():
         game_id = request.args.get("gameId")
+        game = Game.query.filter_by(id=game_id).first()
+        fen = game.fen    
+        board = chess.Board()
+        board.set_fen(fen)
+
         data = request.get_json()
         move = data.get("move") # in uci
-        game = Game.query.filter_by(id=game_id).first()
-        fen = game.fen
+        over = data.get("over")
 
-        board = chess.Board(fen)
-        if chess.Move.from_uci(move) in board.legal_moves:
-            board.push_uci(move)
-            fen = board.fen()
-        else:
-            return jsonify({"move": "illegal"})
-        
-        # add the rest of move checking
-  
-        game.update_fen(fen)
-        game.save()
+        if over:
+            if move:
+                try:
+                    board.push(board.parse_uci(move))
+                    fen = board.fen()
+                    game.update_fen(fen)
+                    game.save()
+                except ValueError:
+                    return jsonify({"move": "illegal"})
+                
+            if board.is_game_over():
+                result = "DRAW"
+            if board.is_stalemate():
+                result = "STALEMATE"
+            if board.is_insufficient_material():
+                result = "INSUFFICIENT_MATERIAL"
+            if board.is_seventyfive_moves():
+                result = "SEVENTYFIVE_MOVES"
+            if board.is_fivefold_repetition():
+                result = "FIVEFOLD_REPETITION"
+            if board.can_claim_threefold_repetition():
+                result = "THREEFOLD_REPETITION"
+            if board.is_checkmate():
+                if board.result() == '1-0':
+                    result = "WHITE WON"
+                else:
+                    result = "BLACK WON"
 
-        return jsonify({"move": "successful", "next legal": board.legal_moves()})
+            game.set_result(outcome=result)
+            game.set_end_time()
+            game.save()
+            return jsonify({"game":"end"})
+
+        elif chess.Move.from_uci(move) in board.legal_moves:
+            try:
+                board.push(board.parse_uci(move))
+                fen = board.fen()
+                game.update_fen(fen)
+                game.save()
+            except ValueError:
+                return jsonify({"move": "illegal"})
+            
+            return jsonify({"move":"legal"})
 
     @app.route("/loggedhome", methods=["GET", "POST"])
     def home():

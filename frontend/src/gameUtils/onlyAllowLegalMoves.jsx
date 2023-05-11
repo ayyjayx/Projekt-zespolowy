@@ -9,9 +9,12 @@ export function onlyAllowLegalMoves(gameId) {
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
             const { piece } = e.detail;
-
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
+                updateStatus();
+                axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                        over: true,
+                    });
                 e.preventDefault();
                 return;
             }
@@ -37,13 +40,25 @@ export function onlyAllowLegalMoves(gameId) {
                     to: target,
                     promotion: 'q' // always promote to a queen for simplicity
                 });
+                
+                if (game.isGameOver()) {
+                    updateStatus();
+                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                        move: source + target,
+                        over: true,
+                    });
+                    e.preventDefault();
+                    return;
+                }
 
-                if (move) {
-                    axios.post('http://localhost:5000/game/move', {
-                        gameId: gameId,
-                        move: move.uci()
+                else {
+                    console.log(move);
+                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                        move: source + target,
                     });
                 }
+                
+                
             } catch {
                 setAction('snapback');
             }
@@ -60,17 +75,8 @@ export function onlyAllowLegalMoves(gameId) {
         });
     }, []);
 
-    // useEffect(() => {
-
-    // }, []);
-
-    // useEffect(() => {
-
-    // }, []);
-
     function updateStatus() {
         let status = '';
-
         let moveColor = 'White';
         if (game.turn() === 'b') {
             moveColor = 'Black';
@@ -91,10 +97,9 @@ export function onlyAllowLegalMoves(gameId) {
                 status += `, ${moveColor} is in check`;
             }
         }
+        
+        
 
-        // statusElement.innerHTML = status;
-        // fenElement.innerHTML = game.fen();
-        // pgnElement.innerHTML = game.pgn();
         React.statusElement = status;
         React.fenElement = game.fen();
         React.pgnElement = game.pgn();

@@ -29,7 +29,7 @@ export default function App() {
           <Route path ="profile/delete" element={<ProfileDelete />} />
           <Route path ="reset_password" element={<PasswordReset />} />
           <Route path ="reset_send_email" element={<ResetEmail />} />
-          <Route path='game' element={<Game />} />
+          <Route path='game/:gameId' element={<Game />} />
         </Route>
       </Routes>
     </BrowserRouter>

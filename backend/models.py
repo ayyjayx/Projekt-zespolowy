@@ -58,23 +58,14 @@ class Account(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-
-class Result(db.Model):
-    id = db.Column(db.Integer(), nullable=False, primary_key=True)
-    description = db.Column(db.String(128), nullable=True)
-    postgresql_ignore_search_path = False
-
-
 class Game(db.Model):
     id = db.Column(db.String(32), primary_key=True, unique=True, nullable=False)
     start_time = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
     end_time = db.Column(db.DateTime(), nullable=True)
     fen = db.Column(db.String(), nullable=False)
-    player_one_id = db.Column(db.Integer(), nullable=True)
+    player_one_id = db.Column(db.Integer(), nullable=False)
     player_two_id = db.Column(db.Integer(), nullable=True)
-    result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
-
-    game_result_id_fkey = db.relationship("Result", foreign_keys="Game.result_id")
+    result = db.Column(db.String(), nullable=True)
 
     def update_fen(self, new_fen):
         self.fen = new_fen
@@ -82,3 +73,9 @@ class Game(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+    def set_end_time(self):
+        self.end_time=datetime.utcnow()
+
+    def set_result(self, outcome):
+        self.result = outcome
