@@ -61,11 +61,11 @@ class Account(db.Model):
 class Game(db.Model):
     id = db.Column(db.String(32), primary_key=True, unique=True, nullable=False)
     start_time = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
-    end_time = db.Column(db.DateTime(), nullable=True)
+    end_time = db.Column(db.DateTime(), nullable=True, default=None)
     fen = db.Column(db.String(), nullable=False)
     player_one_id = db.Column(db.Integer(), nullable=False)
     player_two_id = db.Column(db.Integer(), nullable=True)
-    result = db.Column(db.String(), nullable=True)
+    result = db.Column(db.String(), nullable=True, default=None)
 
     def update_fen(self, new_fen):
         self.fen = new_fen
@@ -79,3 +79,12 @@ class Game(db.Model):
 
     def set_result(self, outcome):
         self.result = outcome
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'fen': self.fen,
+            'result': self.result
+        }

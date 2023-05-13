@@ -1,22 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 // import { isLoggedIn } from '../utils/isLoggedIn';
-// import { hasJWT } from '../utils/hasJWT.jsx';
+import { hasJWT } from '../utils/hasJWT.jsx';
 import axios from 'axios';
+import Button from 'react-bootstrap/Button';
+import './style.css';
 
 
 function LoggedHome() {
-    // hasJWT() ? window.location.href = '/' : '';
+    hasJWT();
 
-    const [loading, setLoading] = useState(false);
     const handleClick = () => {
-        setLoading(true);
-        axios.get('http://localhost:5000/creategame')
+        axios.get('http://localhost:5000/creategameauth')
         .then(response => {
             const gameId = response.data.id;
-            window.location.href = `/game/${gameId}`;
-        })
-        .finally(() => {
-            setLoading(false);
+            window.location.href = `/authgame/${gameId}`;
         });
 
     }
@@ -24,8 +21,7 @@ function LoggedHome() {
     return (
         <div className='center'>
             <h2>Jesteś zalogowany</h2>
-
-            <button disabled={loading} onClick={handleClick}> Zagraj tu! </button>
+            <Button onClick={handleClick}> Zagraj tu! </Button>
         </div>
     );
 }
