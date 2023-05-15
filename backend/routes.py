@@ -1,15 +1,129 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from config import Config
 from flask import jsonify, make_response, render_template_string, request
 from flask_cors import cross_origin
-from flask_jwt_extended import (create_access_token, create_refresh_token,
-                                get_jwt, get_jwt_identity, jwt_required,
-                                unset_jwt_cookies, get_csrf_token, set_access_cookies, set_refresh_cookies)
+from flask_jwt_extended import (create_access_token, create_refresh_token,get_jwt_identity,
+                                jwt_required, unset_jwt_cookies, set_access_cookies,
+                                set_refresh_cookies)
 from flask_mail import Mail, Message
-from models import Account, ResetToken
+from models import Account, ResetToken, Game
+import chess
+import uuid
 
 def init_routes(app):
+    @app.route("/creategame", methods=["POST", "GET"]) # create a new game for logged-in user
+    @jwt_required()
+    def newgame_auth():
+        current_user = get_jwt_identity()
+
+        board = chess.Board()
+        new_game = Game(
+            id = str(uuid.uuid4().hex),
+            fen = board.fen(),
+            player_one_id = current_user,
+        )
+        new_game.save()
+        
+        return jsonify({"id": new_game.id})
+    
+    @app.route("/game", methods=["POST"]) # validate and save moves for logged-in user
+    @jwt_required()
+    def game_auth():
+        game_id = request.args.get("gameId")
+        game = Game.query.filter_by(id=game_id).first()
+        fen = game.fen    
+        board = chess.Board()
+        board.set_fen(fen)
+
+        data = request.get_json()
+        move = data.get("move") # in uci
+        over = data.get("over")
+        reverse = data.get("reverse")
+
+        if reverse:
+            try:
+                board.pop()
+                fen = board.fen()
+                game.update_fen(fen)
+                game.save()
+            except ValueError:
+                return jsonify({"move": "cannot reverse", "fen": fen})
+            
+            return jsonify({"move": "reversed", "fen": fen})
+
+        if over:                
+            if board.is_game_over():
+                if board.result() == '1-0':
+                    result = "WHITE WON"
+                if board.result() == '0-1':
+                    result = "BLACK WON"
+                else:
+                    result = "DRAW"
+
+            game.set_result(outcome=result)
+            game.set_end_time()
+            game.save()
+            return jsonify({"game":"end"})
+
+        elif chess.Move.from_uci(move) in board.legal_moves:
+            try:
+                board.push(board.parse_uci(move))
+                fen = board.fen()
+                game.update_fen(fen)
+                game.save()
+            except ValueError:
+                return jsonify({"move": "illegal", "fen": fen})
+            return jsonify({"move":"legal", "fen": fen})
+
+    @app.route("/game_noauth", methods=["POST", "GET"]) # validate and save game for not-auth user
+    def game():
+        data = request.get_json()
+        fen = data.get("fen")
+
+        board = chess.Board()
+        board.set_fen(fen)
+
+        move = data.get("move") # in uci
+        over = data.get("over")
+        reverse = data.get("reverse")
+
+        if reverse:
+            try:
+                board.pop()
+                fen = board.fen()
+            except ValueError:
+                return jsonify({"move": "cannot reverse", "fen": fen})
+            
+            return jsonify({"move": "reversed", "fen": fen})
+
+        if over:          
+            if board.is_game_over():
+                if board.result() == '1-0':
+                    result = "WHITE WON"
+                if board.result() == '0-1':
+                    result = "BLACK WON"
+                else:
+                    result = "DRAW"
+
+            return jsonify({"result": result})
+
+        elif chess.Move.from_uci(move) in board.legal_moves:
+            try:
+                board.push(board.parse_uci(move))
+                fen = board.fen()
+            except ValueError:
+                return jsonify({"move": "illegal", "fen": fen})
+            return jsonify({"move":"legal", "fen": fen})
+        
+    @app.route("/profile/games", methods=["GET"]) # show player's previous and ongoing games
+    @jwt_required()
+    def mygames():
+        current_user = get_jwt_identity()
+        games = Game.query.filter_by(player_one_id=current_user).all()
+        games_dict = [game.to_dict() for game in games]
+        return jsonify(games_dict)
+
     @app.route("/loggedhome", methods=["GET", "POST"])
     def home():
         data = request.get_data()
@@ -174,7 +288,6 @@ def init_routes(app):
     @jwt_required(refresh=True)
     def refresh():
         current_user = get_jwt_identity()
-        # account = Account.query.get(current_user)
         access_token = create_access_token(identity=current_user)
         response = jsonify({'refresh': True})
         set_access_cookies(response, access_token)

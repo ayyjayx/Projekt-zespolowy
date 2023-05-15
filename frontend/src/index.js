@@ -12,6 +12,9 @@ import ProfileUpdate from './pages/ProfileUpdate';
 import ProfileDelete from './pages/ProfileDelete';
 import PasswordReset from './pages/PasswordReset';
 import ResetEmail from './pages/ResetEmail';
+import Game from './pages/NotAuthGame';
+import NotAuthGame from './pages/NotAuthGame';
+import MyGames from './pages/MyGames';
 
 export default function App() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
           <Route path ="profile/delete" element={<ProfileDelete />} />
           <Route path ="reset_password" element={<PasswordReset />} />
           <Route path ="reset_send_email" element={<ResetEmail />} />
+          <Route path='game/:gameId' element={<Game />} />
+          <Route path='noauthgame' element={<NotAuthGame />} />
+          <Route path='profile/games' element={<MyGames />} />
         </Route>
       </Routes>
     </BrowserRouter>
