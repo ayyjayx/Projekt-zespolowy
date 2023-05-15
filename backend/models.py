@@ -87,8 +87,8 @@ class Game(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'start_time': self.start_time,
-            'end_time': self.end_time,
+            'start_time': self.start_time.strftime("%H:%M %d %B %Y"),
+            'end_time': self.end_time.strftime("%H:%M %d %B %Y"),
             'fen': self.fen,
             'result': self.result
         }

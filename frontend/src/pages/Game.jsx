@@ -6,7 +6,7 @@ import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 import { hasJWT } from '../utils/hasJWT';
 
 function Game() {
-    hasJWT();
+    hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
     onlyAllowLegalMoves(gameId);
 

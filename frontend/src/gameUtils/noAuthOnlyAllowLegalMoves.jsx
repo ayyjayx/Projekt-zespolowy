@@ -4,8 +4,8 @@ import 'chessboard-element';
 import axios from "axios";
 
 // add saving FEN to localStorage
-// and send fen with each request? 
-export function onlyAllowLegalMoves() {
+// 
+export function noAuthOnlyAllowLegalMoves() {
     const game = new Chess();
 
     useEffect(() => {

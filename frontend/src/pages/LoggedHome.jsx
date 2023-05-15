@@ -10,10 +10,12 @@ function LoggedHome() {
     hasJWT();
 
     const handleClick = () => {
-        axios.get('http://localhost:5000/creategameauth')
+        axios.get('http://localhost:5000/creategame', {
+            withCredentials: true,
+        })
         .then(response => {
             const gameId = response.data.id;
-            window.location.href = `/authgame/${gameId}`;
+            window.location.href = `game/${gameId}`;
         });
 
     }
