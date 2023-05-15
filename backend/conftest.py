@@ -1,6 +1,6 @@
 from app import create_app
 from config import TestingConfig
-from models import db as _db
+from models import Account, db as _db
 import pytest
 from flask_jwt_extended import JWTManager
 
@@ -24,3 +24,9 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+@pytest.fixture
+def new_account():
+    account = Account(email="pytest@test.com", username="testuser", admin=False)
+    account.set_password("password")
+    return account

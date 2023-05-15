@@ -2,13 +2,6 @@ import pytest
 from models import Account
 
 
-@pytest.fixture
-def new_account():
-    account = Account(email="pytest@test.com", username="testuser", admin=False)
-    account.set_password("password")
-    return account
-
-
 def test_account(new_account, app):
     with app.app_context():
         new_account.save()
