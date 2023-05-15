@@ -99,3 +99,6 @@ class Game(db.Model):
             'result': self.result,
             'san': ','.join(self.moves) if self.moves else []
         }
+
+#     def set_result(self, result):
+#         self.result = result
