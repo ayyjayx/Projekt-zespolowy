@@ -31,8 +31,8 @@ export default function App() {
           <Route path ="profile/delete" element={<ProfileDelete />} />
           <Route path ="reset_password" element={<PasswordReset />} />
           <Route path ="reset_send_email" element={<ResetEmail />} />
-          <Route path='authgame/:gameId' element={<Game />} />
-          <Route path='game/:gameId' element={<NotAuthGame />} />
+          <Route path='game/:gameId' element={<Game />} />
+          <Route path='noauthgame' element={<NotAuthGame />} />
           <Route path='profile/games' element={<MyGames />} />
         </Route>
       </Routes>

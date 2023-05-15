@@ -2,11 +2,10 @@ import React, { useEffect } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
-import { hasJWT } from "../utils/hasJWT";
 
-export function onlyAllowLegalMoves(gameId) {
-    hasJWT();
-
+// add saving FEN to localStorage
+// and send fen with each request? 
+export function onlyAllowLegalMoves() {
     const game = new Chess();
 
     useEffect(() => {
@@ -15,7 +14,7 @@ export function onlyAllowLegalMoves(gameId) {
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
-                axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                axios.post(`http://localhost:5000/game_noauth`, {
                         over: true,
                     });
                 e.preventDefault();
@@ -46,7 +45,8 @@ export function onlyAllowLegalMoves(gameId) {
                 
                 if (game.isGameOver()) {
                     updateStatus();
-                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                    axios.post(`http://localhost:5000/game_noauth`, {
+                        fen: game.fen(),
                         move: source + target,
                         over: true,
                     });
@@ -56,7 +56,8 @@ export function onlyAllowLegalMoves(gameId) {
 
                 else {
                     console.log(move);
-                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
+                    axios.post(`http://localhost:5000/game_noauth`, {
+                        fen: game.fen(),
                         move: source + target,
                     });
                 }

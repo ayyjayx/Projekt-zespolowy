@@ -1,12 +1,10 @@
 import React from 'react';
 import 'chessboard-element';
-import { useParams } from 'react-router-dom';
 import './style.css';
-import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
+import { noAuthOnlyAllowLegalMoves } from '../gameUtils/noAuthOnlyAllowLegalMoves';
 
 function NotAuthGame() {
-    const { gameId } = useParams();
-    onlyAllowLegalMoves(gameId);
+    noAuthOnlyAllowLegalMoves();
 
     return (
         <div className='center'>

@@ -67,6 +67,10 @@ class Game(db.Model):
     player_two_id = db.Column(db.Integer(), nullable=True)
     result = db.Column(db.String(), nullable=True, default=None)
 
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
     def update_fen(self, new_fen):
         self.fen = new_fen
 
