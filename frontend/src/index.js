@@ -12,7 +12,7 @@ import ProfileUpdate from './pages/ProfileUpdate';
 import ProfileDelete from './pages/ProfileDelete';
 import PasswordReset from './pages/PasswordReset';
 import ResetEmail from './pages/ResetEmail';
-import Game from './pages/NotAuthGame';
+import Game from './pages/Game';
 import NotAuthGame from './pages/NotAuthGame';
 import MyGames from './pages/MyGames';
 
@@ -32,7 +32,7 @@ export default function App() {
           <Route path ="reset_password" element={<PasswordReset />} />
           <Route path ="reset_send_email" element={<ResetEmail />} />
           <Route path='game/:gameId' element={<Game />} />
-          <Route path='noauthgame' element={<NotAuthGame />} />
+          <Route path='game_noauth' element={<NotAuthGame />} />
           <Route path='profile/games' element={<MyGames />} />
         </Route>
       </Routes>

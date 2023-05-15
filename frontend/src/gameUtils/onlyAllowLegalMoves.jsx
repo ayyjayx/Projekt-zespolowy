@@ -17,6 +17,8 @@ export function onlyAllowLegalMoves(gameId) {
                 updateStatus();
                 axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
                         over: true,
+                    }, {
+                        withCredentials: true,
                     });
                 e.preventDefault();
                 return;
@@ -43,21 +45,28 @@ export function onlyAllowLegalMoves(gameId) {
                     to: target,
                     promotion: 'q' // always promote to a queen for simplicity
                 });
-                
+
+                if (move !== null && 'promotion' in move){
+                    console.log("promotion at: " + target + " into: " + move.promotion);
+                }
+
                 if (game.isGameOver()) {
-                    updateStatus();
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        move: source + target,
+                        // move: source + target + promotion,
                         over: true,
+                    }, {
+                        withCredentials: true,
                     });
                     e.preventDefault();
                     return;
                 }
 
                 else {
-                    console.log(move);
+                    // console.log(move);
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        move: source + target,
+                        move: move.lan,
+                    }, {
+                        withCredentials: true,
                     });
                 }
                 
@@ -109,5 +118,5 @@ export function onlyAllowLegalMoves(gameId) {
         console.log(status)
     }
 
-    updateStatus();
+    // updateStatus();
 }
