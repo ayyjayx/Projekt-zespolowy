@@ -5,6 +5,7 @@ frontend/build
 backend/__pycache__
 backend/migrations/__pycache__
 backend/tests/__pycache__
+.pytest_cache
 
 # Ignore auxillary files
 .idea
