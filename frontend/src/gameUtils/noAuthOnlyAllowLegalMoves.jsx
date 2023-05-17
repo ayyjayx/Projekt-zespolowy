@@ -3,8 +3,7 @@ import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
 
-// add saving FEN to localStorage
-// 
+
 export function noAuthOnlyAllowLegalMoves() {
     const game = new Chess();
 
@@ -14,9 +13,10 @@ export function noAuthOnlyAllowLegalMoves() {
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
-                axios.post(`http://localhost:5000/game_noauth`, {
-                        over: true,
-                    });
+                // axios.post(`http://localhost:5000/game_noauth`, {
+                //         over: true,
+                //     });
+                localStorage.removeItem("FEN");
                 e.preventDefault();
                 return;
             }
