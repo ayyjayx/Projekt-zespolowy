@@ -35,15 +35,10 @@ export function onlyAllowLegalMoves(gameId) {
     const cookies = new Cookies();
 
     const position = getFenPosition(gameId);
-    console.log("before load", position)
 
     if (position !== null) {
         game.load(position)
-        updateStatus();
-        console.log("inside load", game.fen());
     }
-
-    console.log("after load", game.fen())
 
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
