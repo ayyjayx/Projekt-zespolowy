@@ -2,48 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
-import { hasJWT } from "../utils/hasJWT";
+import { getFenPosition } from "../pages/Game";
 import Cookies from 'universal-cookie';
 
+
 const game = new Chess();
-
-export function getFenPosition(gameId) {
-    const [position, setPosition] = useState(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/game?gameId=${gameId}`, {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                setPosition(response.data.FEN);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        fetchData();
-    }, [position]);
-
-    return position;
-}
+const cookies = new Cookies();
 
 export function onlyAllowLegalMoves(gameId) {
-    hasJWT();
-    const cookies = new Cookies();
-
     const position = getFenPosition(gameId);
-    console.log("before load", position)
-
     if (position !== null) {
-        game.load(position)
-        updateStatus();
-        console.log("inside load", game.fen());
+        game.load(position);
     }
-
-    console.log("after load", game.fen())
 
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
@@ -64,31 +34,32 @@ export function onlyAllowLegalMoves(gameId) {
                 return;
             }
 
-            // only pick up pieces for the side to move
-            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-                e.preventDefault();
-                return;
-            }
-        });
-
-    }, []);
+        // only pick up pieces for the side to move
+        if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+            (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            e.preventDefault();
+            return;
+        }
+    });
+}, []);
 
     useEffect(() => {
+        // React.board.setPosition(game.fen());
         React.board.addEventListener('drop', (e) => {
-            const { source, target, setAction } = e.detail;
+        const { source, target, setAction } = e.detail;
 
-            // see if the move is legal
-            try {
-                const move = game.move({
-                    from: source,
-                    to: target,
-                    promotion: 'q' // always promote to a queen for simplicity
-                });
+        // see if the move is legal
+        try {
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // always promote to a queen for simplicity
+            });
 
-                if (move !== null && 'promotion' in move) {
-                    console.log("promotion at: " + target + " into: " + move.promotion);
-                }
+            if (move !== null && 'promotion' in move){
+                console.log("promotion at: " + target + " into: " + move.promotion);
+            }
+            updateStatus();
 
                 if (game.isGameOver()) {
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
@@ -118,6 +89,7 @@ export function onlyAllowLegalMoves(gameId) {
             } catch {
                 setAction('snapback');
             }
+            console.log("Dostępne ruchy: ", game.moves())
             updateStatus();
         });
     }, []);
@@ -129,23 +101,24 @@ export function onlyAllowLegalMoves(gameId) {
             React.board.setPosition(game.fen());
         });
     }, []);
+}
 
-    function updateStatus() {
-        let status = '';
-        let moveColor = 'White';
-        if (game.turn() === 'b') {
-            moveColor = 'Black';
-        }
+function updateStatus() {
+    let status = '';
+    let moveColor = 'White';
+    if (game.turn() === 'b') {
+        moveColor = 'Black';
+    }
 
-        if (game.isCheckmate()) {
-            // checkmate?
-            status = `Game over, ${moveColor} is in checkmate.`;
-        } else if (game.isDraw()) {
-            // draw?
-            status = 'Game over, drawn position';
-        } else {
-            // game still on
-            status = `${moveColor} to move`;
+    if (game.isCheckmate()) {
+        // checkmate?
+        status = `Game over, ${moveColor} is in checkmate.`;
+    } else if (game.isDraw()) {
+        // draw?
+        status = 'Game over, drawn position';
+    } else {
+        // game still on
+        status = `${moveColor} to move`;
 
             // check?
             if (game.inCheck()) {
@@ -158,6 +131,3 @@ export function onlyAllowLegalMoves(gameId) {
         React.pgnElement = game.pgn();
         console.log("status", status)
     }
-
-    updateStatus();
-}

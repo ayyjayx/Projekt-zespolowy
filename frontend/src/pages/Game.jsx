@@ -1,23 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import 'chessboard-element';
 import { useParams } from 'react-router-dom';
 import './style.css';
 import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
-import { getFenPosition } from '../gameUtils/onlyAllowLegalMoves';
-// import { hasJWT } from '../utils/hasJWT';
+import { hasJWT } from '../utils/hasJWT';
+import axios from 'axios';
+
+
+export function getFenPosition(gameId) {
+    const [position, setPosition] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/game?gameId=${gameId}`, {
+                    withCredentials: true,
+                    headers: {
+                      "Content-Type": "application/json"
+                    }
+                  });
+                setPosition(response.data.FEN);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        fetchData();
+    }, [position]);
+
+    return position;
+  }
+
 
 function Game() {
-    // hasJWT() ? '' : window.location.href = '/home';
+    hasJWT();
+    // hasJWT() ? '' : window.location.href = '/';
     const { gameId } = useParams();
     onlyAllowLegalMoves(gameId);
-    const position = getFenPosition(gameId)
-    // console.log(posFen)
+    
+
 
     return (
         <div className='center'>
             <h2>Zalogowany</h2>
             <chess-board
-                position={position}
+                position={getFenPosition(gameId)}
                 orientation={React.flipped ? 'black' : 'white'}
                 draggable-pieces
                 ref={(e) => React.board = e}
