@@ -22,14 +22,10 @@ export function onlyAllowLegalMoves(gameId) {
             if (game.isGameOver()) {
                 updateStatus();
                 axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-
-                    over: true,
-                }, {
-                    withCredentials: true,
-                    headers: {
-                        "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                    }
-                });
+                        over: true,
+                    }, {
+                        withCredentials: true,
+                    });
                 e.preventDefault();
                 return;
             }
@@ -63,29 +59,25 @@ export function onlyAllowLegalMoves(gameId) {
 
                 if (game.isGameOver()) {
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        move: move.lan,
+                        // move: source + target + promotion,
                         over: true,
                     }, {
                         withCredentials: true,
-                        headers: {
-                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                        }
                     });
                     e.preventDefault();
-                    updateStatus();
                     return;
                 }
 
                 else {
+                    // console.log(move);
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
                         move: move.lan,
                     }, {
                         withCredentials: true,
-                        headers: {
-                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                        }
                     });
                 }
+                
+                
             } catch {
                 setAction('snapback');
             }
@@ -125,9 +117,11 @@ function updateStatus() {
                 status += `, ${moveColor} is in check`;
             }
         }
+        
+        
 
         React.statusElement = status;
         React.fenElement = game.fen();
         React.pgnElement = game.pgn();
-        console.log("status", status)
+        console.log(status)
     }

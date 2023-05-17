@@ -33,6 +33,12 @@ export function getFenPosition(gameId) {
 
 function Game() {
     hasJWT();
+<<<<<<< HEAD
+=======
+    console.log(hasJWT());
+
+    // nie działa bo pierwszy leci undefined
+>>>>>>> d8aa1a19dd7426b2e77297cd713640f1ac517a75
     // hasJWT() ? '' : window.location.href = '/';
     const { gameId } = useParams();
     onlyAllowLegalMoves(gameId);
