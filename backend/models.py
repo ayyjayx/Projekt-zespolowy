@@ -66,6 +66,7 @@ class Game(db.Model):
     player_one_id = db.Column(db.Integer(), nullable=False)
     player_two_id = db.Column(db.Integer(), nullable=True)
     result = db.Column(db.String(), nullable=True, default=None)
+    pgn = db.Column(db.String(), nullable=True)
 
     def delete(self):
         db.session.delete(self)
@@ -73,6 +74,9 @@ class Game(db.Model):
 
     def update_fen(self, new_fen):
         self.fen = new_fen
+
+    def update_pgn(self, new_pgn):
+        self.pgn = new_pgn
 
     def save(self):
         db.session.add(self)
@@ -90,5 +94,6 @@ class Game(db.Model):
             'start_time': self.start_time.strftime("%H:%M %d %B %Y"),
             'end_time': self.end_time.strftime("%H:%M %d %B %Y"),
             'fen': self.fen,
-            'result': self.result
+            'result': self.result,
+            'pgn': self.pgn
         }
