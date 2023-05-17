@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
