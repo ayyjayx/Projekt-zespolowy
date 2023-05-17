@@ -7,6 +7,14 @@ import axios from "axios";
 // 
 export function noAuthOnlyAllowLegalMoves() {
     const game = new Chess();
+    const saved_fen = localStorage.getItem("FEN");
+    // console.log(saved_fen);
+    if (saved_fen) {
+        game.load(saved_fen)
+    }
+    else {
+        localStorage.setItem("FEN", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    }
 
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
@@ -14,9 +22,7 @@ export function noAuthOnlyAllowLegalMoves() {
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
-                axios.post(`http://localhost:5000/game_noauth`, {
-                        over: true,
-                    });
+                localStorage.removeItem("FEN");
                 e.preventDefault();
                 return;
             }
@@ -42,7 +48,7 @@ export function noAuthOnlyAllowLegalMoves() {
                     to: target,
                     promotion: 'q' // always promote to a queen for simplicity
                 });
-                
+
                 if (game.isGameOver()) {
                     updateStatus();
                     axios.post(`http://localhost:5000/game_noauth`, {
@@ -50,19 +56,21 @@ export function noAuthOnlyAllowLegalMoves() {
                         move: source + target,
                         over: true,
                     });
-                    e.preventDefault();
+                    localStorage.removeItem("FEN");
+                    // e.preventDefault();
                     return;
                 }
 
                 else {
                     console.log(move);
+                    localStorage.setItem("FEN", game.fen())
                     axios.post(`http://localhost:5000/game_noauth`, {
                         fen: game.fen(),
                         move: source + target,
                     });
                 }
-                
-                
+
+
             } catch {
                 setAction('snapback');
             }
@@ -101,13 +109,13 @@ export function noAuthOnlyAllowLegalMoves() {
                 status += `, ${moveColor} is in check`;
             }
         }
-        
-        
+
+
 
         React.statusElement = status;
         React.fenElement = game.fen();
         React.pgnElement = game.pgn();
-        console.log(status)
+        console.log("status", status)
     }
 
     updateStatus();

@@ -1,13 +1,49 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
 import { hasJWT } from "../utils/hasJWT";
+import Cookies from 'universal-cookie';
+
+const game = new Chess();
+
+export function getFenPosition(gameId) {
+    const [position, setPosition] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/game?gameId=${gameId}`, {
+                    withCredentials: true,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+                setPosition(response.data.FEN);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        fetchData();
+    }, [position]);
+
+    return position;
+}
 
 export function onlyAllowLegalMoves(gameId) {
     hasJWT();
+    const cookies = new Cookies();
 
-    const game = new Chess();
+    const position = getFenPosition(gameId);
+    console.log("before load", position)
+
+    if (position !== null) {
+        game.load(position)
+        updateStatus();
+        console.log("inside load", game.fen());
+    }
+
+    console.log("after load", game.fen())
 
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
@@ -16,10 +52,14 @@ export function onlyAllowLegalMoves(gameId) {
             if (game.isGameOver()) {
                 updateStatus();
                 axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        over: true,
-                    }, {
-                        withCredentials: true,
-                    });
+
+                    over: true,
+                }, {
+                    withCredentials: true,
+                    headers: {
+                        "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
+                    }
+                });
                 e.preventDefault();
                 return;
             }
@@ -46,35 +86,38 @@ export function onlyAllowLegalMoves(gameId) {
                     promotion: 'q' // always promote to a queen for simplicity
                 });
 
-                if (move !== null && 'promotion' in move){
+                if (move !== null && 'promotion' in move) {
                     console.log("promotion at: " + target + " into: " + move.promotion);
                 }
 
                 if (game.isGameOver()) {
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        // move: source + target + promotion,
+                        move: move.lan,
                         over: true,
                     }, {
                         withCredentials: true,
+                        headers: {
+                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
+                        }
                     });
                     e.preventDefault();
+                    updateStatus();
                     return;
                 }
 
                 else {
-                    // console.log(move);
                     axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
                         move: move.lan,
                     }, {
                         withCredentials: true,
+                        headers: {
+                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
+                        }
                     });
                 }
-                
-                
             } catch {
                 setAction('snapback');
             }
-            console.log("Dostępne ruchy: ", game.moves())
             updateStatus();
         });
     }, []);
@@ -109,14 +152,12 @@ export function onlyAllowLegalMoves(gameId) {
                 status += `, ${moveColor} is in check`;
             }
         }
-        
-        
 
         React.statusElement = status;
         React.fenElement = game.fen();
         React.pgnElement = game.pgn();
-        console.log(status)
+        console.log("status", status)
     }
 
-    // updateStatus();
+    updateStatus();
 }
