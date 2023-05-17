@@ -3,9 +3,15 @@ from datetime import datetime, timedelta
 from config import Config
 from flask import jsonify, make_response, render_template_string, request
 from flask_cors import cross_origin
-from flask_jwt_extended import (create_access_token, create_refresh_token,get_jwt_identity,
-                                jwt_required, unset_jwt_cookies, set_access_cookies,
-                                set_refresh_cookies)
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+    unset_jwt_cookies,
+    set_access_cookies,
+    set_refresh_cookies,
+)
 from flask_mail import Mail, Message
 from models import Account, ResetToken, Game
 import chess
@@ -62,7 +68,7 @@ def init_routes(app):
                 game.save()
             except ValueError:
                 return jsonify({"move": "cannot reverse"})
-            
+
             return jsonify({"move": "reversed"})
 
         if move:
@@ -93,10 +99,12 @@ def init_routes(app):
         
         return jsonify({"FEN": fen})
 
-    @app.route("/game_noauth", methods=["POST", "GET"]) # validate and save game for not-auth user
+    @app.route(
+        "/game_noauth", methods=["POST", "GET"]
+    )  # validate and save game for not-auth user
     def game_noauth():
         data = request.get_json()
-        fen = data.get("fen")   
+        fen = data.get("fen")
         board = chess.Board()
         board.set_fen(fen)
 
@@ -111,7 +119,7 @@ def init_routes(app):
                 fen = board.fen()
             except ValueError:
                 return jsonify({"move": "cannot reverse", "fen": fen})
-            
+
             return jsonify({"move": "reversed", "fen": fen})
         
         elif moveObj in board.legal_moves:
@@ -142,7 +150,7 @@ def init_routes(app):
 
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
-        if request.method == 'POST':
+        if request.method == "POST":
             data = request.get_json()
             username = data.get("username")
             email = data.get("email")
@@ -163,9 +171,7 @@ def init_routes(app):
                         new_account = Account(username=username, email=email)
                         new_account.set_password(password)
                         new_account.save()
-                        return make_response(
-                            "Successfully registered.", 201
-                        )
+                        return make_response("Successfully registered.", 201)
                     else:
                         return make_response(
                             "Ten email jest już przypisany do konta", 202
@@ -198,10 +204,10 @@ def init_routes(app):
                 response = jsonify(
                     access_token=access_token, refresh_token=refresh_token
                 )
-                response = jsonify({'login': True})
+                response = jsonify({"login": True})
                 set_access_cookies(response, access_token)
                 set_refresh_cookies(response, refresh_token)
-                
+
                 return response
 
             return make_response("Incorrect Password.", 200)
@@ -210,7 +216,7 @@ def init_routes(app):
 
     @app.route("/logout", methods=["POST"])
     def logout():
-        response = jsonify({'logout': True})
+        response = jsonify({"logout": True})
         unset_jwt_cookies(response)
         return response
 
@@ -219,7 +225,7 @@ def init_routes(app):
     def show_account():
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
-        
+
         if not account:
             return make_response("Account does not exist.", 404)
 
@@ -256,7 +262,9 @@ def init_routes(app):
 
             if account.check_password(password):
                 if new_username != "":
-                    username_exists = Account.query.filter_by(username=new_username).first()
+                    username_exists = Account.query.filter_by(
+                        username=new_username
+                    ).first()
                     if not username_exists:
                         account.update_username(new_username)
                     else:
@@ -300,7 +308,7 @@ def init_routes(app):
     def refresh():
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user)
-        response = jsonify({'refresh': True})
+        response = jsonify({"refresh": True})
         set_access_cookies(response, access_token)
         return response
 
@@ -341,7 +349,7 @@ def init_routes(app):
                     """,
                     account=account.username,
                     token=reset_token,
-                    email=email
+                    email=email,
                 )
                 mail.send(msg)
 
@@ -361,9 +369,9 @@ def init_routes(app):
 
         else:
             data = request.get_json()
-            token = data.get('token')
-            email = data.get('email')
-            
+            token = data.get("token")
+            email = data.get("email")
+
             reset_token = ResetToken.query.filter_by(token=token).first()
 
             expiration_time = timedelta(hours=1)
@@ -373,11 +381,11 @@ def init_routes(app):
                 reset_token.delete()
             else:
                 return jsonify({"msg": "Access to reset link has expired."})
-            
+
             if current_time - reset_token.created_at > expiration_time:
                 reset_token.delete()
                 return jsonify({"msg": "Reset token has expired."})
-            
+
             account = Account.query.filter_by(email=email).first()
             if not account:
                 return jsonify({"msg": "User does not exist."})

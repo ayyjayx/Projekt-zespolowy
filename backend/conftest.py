@@ -25,6 +25,7 @@ def app():
 def client(app):
     return app.test_client()
 
+
 @pytest.fixture
 def new_account():
     account = Account(email="pytest@test.com", username="testuser", admin=False)

@@ -12,10 +12,15 @@ db.init_app(app)
 app.config.from_object(DevelopmentConfig)
 migrate = Migrate(app, db)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, 
-     headers={'Access-Control-Allow-Credentials': 'true', 
-              'Access-Control-Allow-Origin': 'http://localhost:3000'}, 
-     supports_credentials=True)
+CORS(
+    app,
+    resources={r"/*": {"origins": "http://localhost:3000"}},
+    headers={
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Origin": "http://localhost:3000",
+    },
+    supports_credentials=True,
+)
 jwt = JWTManager(app)
 mail = Mail(app)
 

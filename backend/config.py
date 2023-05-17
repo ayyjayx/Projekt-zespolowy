@@ -13,10 +13,10 @@ class Config:
     JWT_COOKIE_SECURE = False
     JWT_CSRF_IN_COOKIES = True
     JWT_COOKIE_CSRF_PROTECT = True
-    MAIL_SERVER = 'sandbox.smtp.mailtrap.io'
+    MAIL_SERVER = "sandbox.smtp.mailtrap.io"
     MAIL_PORT = 2525
-    MAIL_USERNAME = 'b0f5148942a087'
-    MAIL_PASSWORD = '85ae025f392454'
+    MAIL_USERNAME = "b0f5148942a087"
+    MAIL_PASSWORD = "85ae025f392454"
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
 
@@ -27,7 +27,7 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    SERVER_NAME = 'localhost:5000'
+    SERVER_NAME = "localhost:5000"
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = "postgresql://postgres:projekt1234@database:5432/postgres"
 

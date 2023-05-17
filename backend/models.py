@@ -60,6 +60,7 @@ class Account(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+
 class Game(db.Model):
     id = db.Column(db.String(32), primary_key=True, unique=True, nullable=False)
     start_time = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
@@ -82,7 +83,7 @@ class Game(db.Model):
         db.session.commit()
 
     def set_end_time(self):
-        self.end_time=datetime.utcnow()
+        self.end_time = datetime.utcnow()
 
     def set_result(self, outcome):
         self.result = outcome
@@ -99,6 +100,7 @@ class Game(db.Model):
             'result': self.result,
             'san': ','.join(self.moves) if self.moves else []
         }
+
 
 #     def set_result(self, result):
 #         self.result = result
