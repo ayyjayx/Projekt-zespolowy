@@ -52,7 +52,7 @@ export function noAuthOnlyAllowLegalMoves() {
                     updateStatus();
                     axios.post(`http://localhost:5000/game_noauth`, {
                         fen: game.fen(),
-                        move: source + target,
+                        move: move.lan,
                         over: true,
                     });
                     localStorage.removeItem("FEN");
@@ -65,7 +65,7 @@ export function noAuthOnlyAllowLegalMoves() {
                     localStorage.setItem("FEN", game.fen())
                     axios.post(`http://localhost:5000/game_noauth`, {
                         fen: game.fen(),
-                        move: source + target,
+                        move: move.lan,
                     });
                 }
 
