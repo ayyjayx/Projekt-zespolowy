@@ -3,7 +3,8 @@ import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
 
-
+// add saving FEN to localStorage
+// 
 export function noAuthOnlyAllowLegalMoves() {
     const game = new Chess();
     const saved_fen = localStorage.getItem("FEN");
