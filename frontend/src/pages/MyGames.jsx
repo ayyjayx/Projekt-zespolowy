@@ -9,7 +9,6 @@ function MyGames() {
     hasJWT();
     const [account, setAccount] = useState('');
     const [games, setGames] = useState([]);
-    const [gamesB, setGamesB] = useState([]);
 
     useEffect(() => {
         axios.get("http://localhost:5000/profile", {
@@ -37,8 +36,7 @@ function MyGames() {
             })
             .then(response => {
                 console.log(response.data);
-                setGames(response.data.WHITE);
-                setGamesB(response.data.BLACK);
+                setGames(response.data.games);
             })
             .catch(err => {
                 console.log(err);
@@ -61,7 +59,7 @@ function MyGames() {
                 <th>Start Time</th>
                 <th>End Time</th>
                 <th>Result</th>
-                <th>PGN</th>
+                <th>SAN</th>
                 {/* <th>FEN</th> */}
               </tr>
             </thead>
@@ -72,31 +70,7 @@ function MyGames() {
                   <td>{game.start_time}</td>
                   <td>{game.end_time}</td>
                   <td>{game.result}</td>
-                  <td>{game.pgn}</td>
-                  {/* <td>{game.fen}</td> */}
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          <Table striped bordered responsive>
-            <thead>
-              <tr>
-                <th>Game ID</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Result</th>
-                <th>PGN</th>
-                {/* <th>FEN</th> */}
-              </tr>
-            </thead>
-            <tbody>
-              {gamesB.map((game) => (
-                <tr key={game.id}>
-                  <td>{game.id}</td>
-                  <td>{game.start_time}</td>
-                  <td>{game.end_time}</td>
-                  <td>{game.result}</td>
-                  <td>{game.pgn}</td>
+                  <td>{game.san}</td>
                   {/* <td>{game.fen}</td> */}
                 </tr>
               ))}

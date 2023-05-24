@@ -20,7 +20,7 @@ function Login() {
         })
             .then(response => {
                 if (response.status === 201) {
-                    setLoginStatus(response.data);
+                    setLoginStatus(response.data.login);
                 }
                 else {
                     console.log(response.headers);

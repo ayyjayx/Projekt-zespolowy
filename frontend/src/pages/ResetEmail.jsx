@@ -22,7 +22,8 @@ function ResetEmail() {
             },
             })
             .then(response => {
-                setResetStatus(response.data);
+                setResetStatus(response.data.email);
+                console.log(response.data.exception)
                 setEmail('');
             })
             .catch(err => {

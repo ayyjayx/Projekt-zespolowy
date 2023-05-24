@@ -51,7 +51,7 @@ function ProfileUpdate() {
             },
         })
             .then(response => {
-                setUpdateStatus(response.data);
+                setUpdateStatus(response.data.profile);
                 setPassword('');
             })
             .catch(err => {
