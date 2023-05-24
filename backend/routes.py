@@ -9,7 +9,6 @@ from flask_jwt_extended import (create_access_token, create_refresh_token,get_jw
 from flask_mail import Mail, Message
 from models import Account, ResetToken, Game
 import chess
-import chess.pgn
 import uuid
 
 pgn = chess.pgn.Game()
@@ -22,7 +21,9 @@ def init_routes(app):
         current_game = Game.query.filter_by(player_one_id=current_user).first()
 
         if current_game and not current_game.result:
-            return jsonify({"id": current_game.id})
+            # tutaj wysyłać listę gier do wyboru?
+            response = {"id": current_game.id}
+            return make_response(jsonify(response), 200)
         else:
             board = chess.Board()
             new_game = Game(
@@ -31,7 +32,8 @@ def init_routes(app):
                 player_one_id = current_user
             )
             new_game.save()
-            return jsonify({"id": new_game.id})
+            response = {"id": new_game.id}
+            return make_response(jsonify(response), 200)
     
     @app.route("/game", methods=["POST", "GET"]) # validate and save moves for logged-in user
     @jwt_required()
@@ -41,14 +43,16 @@ def init_routes(app):
         game = Game.query.filter_by(id=game_id).first()
 
         if current_user != (game.player_one_id or game.player_two_id):
-            return jsonify({"auth": "denied"})
+            response = {"game": "Authorization denied"}
+            return make_response(jsonify(response), 201)
         
         fen = game.fen    
         board = chess.Board()
         board.set_fen(fen)
 
         if request.method == "GET":
-            return jsonify({"FEN": fen})
+            response = {"FEN": fen}
+            return make_response(jsonify(response), 200)
 
         data = request.get_json()
         move = data.get("move")
@@ -61,10 +65,11 @@ def init_routes(app):
                 game.update_fen(fen)
                 game.save()
             except ValueError:
-                return jsonify({"move": "cannot reverse"})
-            
-            return jsonify({"move": "reversed"})
-
+                response = {"move": "Cannot reverse this move"}
+                return make_response(jsonify(response), 201)
+            response = {"move": "Successfully reversed"}
+            return make_response(jsonify(response), 200)
+        
         if move:
             game.add_move(board.san(chess.Move.from_uci(move)))
             if chess.Move.from_uci(move) in board.legal_moves:
@@ -88,10 +93,13 @@ def init_routes(app):
                     game.save()
 
                 except ValueError:
-                    return jsonify({"move": "illegal"})
-                return jsonify({"move":"legal"})
+                    response = {"move": "illegal"}
+                    return make_response(jsonify(response), 201)
+                response = {"move": "legal"}
+                return make_response(jsonify(response), 200)
         
-        return jsonify({"FEN": fen})
+        response = {"FEN": fen}
+        return make_response(jsonify(response), 203)
 
     @app.route("/game_noauth", methods=["POST", "GET"]) # validate and save game for not-auth user
     def game_noauth():
@@ -110,35 +118,37 @@ def init_routes(app):
                 board.pop()
                 fen = board.fen()
             except ValueError:
-                return jsonify({"move": "cannot reverse", "fen": fen})
-            
-            return jsonify({"move": "reversed", "fen": fen})
+                response = {"move": "Cannot reverse this move", "fen": fen}
+                return make_response(jsonify(response), 201)
+            response = {"move": "reversed", "fen": fen}
+            return make_response(jsonify(response), 200)
         
         elif moveObj in board.legal_moves:
             try:
                 board.push(board.parse_uci(move))
                 fen = board.fen()
             except ValueError:
-                return jsonify({"move": "illegal", "fen": fen})
-            
-            return jsonify({"move":"legal", "fen": fen})
+                response = {"move": "illegal", "fen": fen}
+                return make_response(jsonify(response), 201)
+            response = {"move":"legal", "fen": fen}
+            return make_response(jsonify(response), 200)
         
-        return jsonify({"fen": fen})
+        response = {"fen": fen}
+        return make_response(jsonify(response), 203)
         
     @app.route("/profile/games", methods=["GET"]) # show player's previous and ongoing games
     @jwt_required()
     def mygames():
         current_user = get_jwt_identity()
         games = Game.query.filter_by(player_one_id=current_user).all()
-        games2 = Game.query.filter_by(player_two_id=current_user).all()
         games_dict = [game.to_dict() for game in games]
-        games_dict2 = [game.to_dict() for game in games2]
-        return jsonify({"WHITE": games_dict, "BLACK": games_dict2})
+        response = {"games": games_dict}
+        return make_response(jsonify(response), 200)
 
     @app.route("/loggedhome", methods=["GET", "POST"])
     def home():
-        data = request.get_data()
-        return jsonify(data)
+        response = {"status":"ok"}
+        return make_response(jsonify(response), 200)
 
     @app.route("/registration", methods=["GET", "POST"])
     def registration():
@@ -150,10 +160,12 @@ def init_routes(app):
             passwordRepeat = data.get("passwordRepeat")
 
             if not username or not password or not email or not passwordRepeat:
-                return make_response("Missing data", 202)
+                response = {"registration": "Missing data"}
+                return make_response(jsonify(response), 202)
 
             if len(password) < 4:
-                return make_response("Password must be >=4 characters long", 202)
+                response = {"registration": "Password must be >=4 characters long"}
+                return make_response(jsonify(response), 202)
 
             if password == passwordRepeat:
                 username_exists = Account.query.filter_by(username=username).first()
@@ -163,56 +175,57 @@ def init_routes(app):
                         new_account = Account(username=username, email=email)
                         new_account.set_password(password)
                         new_account.save()
-                        return make_response(
-                            "Successfully registered.", 201
-                        )
+                        response = {"registration": "Successfully registered"}
+                        return make_response(jsonify(response), 200)
                     else:
-                        return make_response(
-                            "Ten email jest już przypisany do konta", 202
-                        )
+                        response = {"registration": "Ten email jest już przypisany do konta"}
+                        return make_response(jsonify(response), 202)
                 else:
-                    return make_response("Account already exists.", 202)
+                    response = {"registration": "Account already exists."}
+                    return make_response(jsonify(response), 202)
             else:
-                return make_response("Passwords do not match", 202)
+                response = {"registration": "Passwords do not match"}
+                return make_response(jsonify(response), 202)
         else:
-            return make_response("Use POST method", 200)
+            response = {"registration": "Use POST method"}
+            return make_response(jsonify(response), 200)
 
-    @app.route("/login", methods=["GET", "POST"])
+    @app.route("/login", methods=["POST"])
     def login():
-        if request.method == "POST":
-            data = request.get_json()
-            username = data.get("username")
-            password = data.get("password")
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
 
-            if not username or not password:
-                return make_response("Missing data.", 201)
+        if not username or not password:
+            response = {"login": "Missing data"}
+            return make_response(jsonify(response), 201)
 
-            account = Account.query.filter_by(username=username).first()
+        account = Account.query.filter_by(username=username).first()
 
-            if not account:
-                return make_response("Account does not exist.", 200)
+        if not account:
+            response = {"login": "Account does not exist"}
+            return make_response(jsonify(response), 201)
 
-            if account.check_password(password):
-                access_token = create_access_token(identity=account.id)
-                refresh_token = create_refresh_token(identity=account.id)
-                response = jsonify(
-                    access_token=access_token, refresh_token=refresh_token
-                )
-                response = jsonify({'login': True})
-                set_access_cookies(response, access_token)
-                set_refresh_cookies(response, refresh_token)
+        if account.check_password(password):
+            access_token = create_access_token(identity=account.id)
+            refresh_token = create_refresh_token(identity=account.id)
+            response = jsonify(
+                access_token=access_token, refresh_token=refresh_token
+            )
+            response = jsonify({"login": "Successful"})
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
                 
-                return response
+            return make_response(response, 200)
 
-            return make_response("Incorrect Password.", 200)
-        else:
-            return make_response("Use POST", 201)
+        response = {"login": "Incorrect Password"}
+        return make_response(jsonify(response), 201)
 
     @app.route("/logout", methods=["POST"])
     def logout():
-        response = jsonify({'logout': True})
+        response = jsonify({"logout": "Successful"})
         unset_jwt_cookies(response)
-        return response
+        return make_response(response, 200)
 
     @app.route("/profile", methods=["GET"])
     @jwt_required()
@@ -221,19 +234,16 @@ def init_routes(app):
         account = Account.query.get(current_user)
         
         if not account:
-            return make_response("Account does not exist.", 404)
+            response = {"profile": "Account does not exist"}
+            return make_response(jsonify(response), 404)
 
-        return (
-            jsonify(
-                {
+        response = {
                     "id": account.id,
                     "email": account.email,
                     "username": account.username,
                     "created_on": account.created_on,
-                }
-            ),
-            201,
-        )
+                    }
+        return make_response(jsonify(response), 200)
 
     @app.route("/profile/update", methods=["GET", "POST"])
     @jwt_required()
@@ -247,7 +257,8 @@ def init_routes(app):
         account = Account.query.filter_by(id=id).first()
 
         if not account:
-            return make_response("Użytkownik nie istnieje.", 201)
+            response = {"profile": "Account does not exist"}
+            return make_response(jsonify(response), 201)
 
         if request.method == "POST":
             new_username = payload.get("username")
@@ -260,27 +271,27 @@ def init_routes(app):
                     if not username_exists:
                         account.update_username(new_username)
                     else:
-                        return make_response("User already exists")
+                        response = {"profile": "Username already in use"}
+                        return make_response(jsonify(response), 201)
 
                 if new_email != "":
                     email_exists = Account.query.filter_by(email=new_email).first()
                     if not email_exists:
                         account.update_email(new_email)
                     else:
-                        return make_response("Email already used")
+                        response = {"profile": "Email already in use"}
+                        return make_response(jsonify(response), 201)
 
                 account.save()
-                response = make_response("Dane konta zaktualizowane", 200)
-                return response
+                response = {"profile": "Successfully updated"}
+                return make_response(jsonify(response), 200)
 
-            return make_response("Niepoprawne hasło.", 201)
+            response = {"profile": "Wrong password"}
+            return make_response(jsonify(response), 201)
 
-        return (
-            jsonify(
-                {"id": account.id, "email": account.email, "username": account.username}
-            ),
-            201,
-        )
+        else:
+            response = {"id": account.id, "email": account.email, "username": account.username}
+            return make_response(jsonify(response), 200)
 
     @app.route("/profile/delete", methods=["DELETE"])
     @jwt_required()
@@ -288,12 +299,15 @@ def init_routes(app):
     def delete_account():
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
+
         if not account:
-            return make_response("Account does not exist", 404)
+            response = {"delete": "Account does not exist"}
+            return make_response(jsonify(response), 404)
 
         account.delete()
 
-        return make_response("Account successfully deleted.", 200)
+        response = {"delete": "Account successfully deleted"}
+        return make_response(jsonify(response), 200)
 
     @app.route("/refresh", methods=["POST"])
     @jwt_required(refresh=True)
@@ -302,7 +316,7 @@ def init_routes(app):
         access_token = create_access_token(identity=current_user)
         response = jsonify({'refresh': True})
         set_access_cookies(response, access_token)
-        return response
+        return make_response(response, 200)
 
     @app.route("/reset_send_email", methods=["GET", "POST"])
     def reset():
@@ -344,10 +358,12 @@ def init_routes(app):
                     email=email
                 )
                 mail.send(msg)
+            response = {"email": "Email has been sent"}
+            return make_response(jsonify(response), 200)
 
-            return make_response("Email has been sent.", 201)
-        except:
-            return make_response("Could not send email.", 230)
+        except Exception as e:
+            response = {"email": "Could not send email", "exception": f"{str(e)}"}
+            return make_response(jsonify(response), 201)
 
     @app.route("/reset_password", methods=["GET", "POST"])
     @cross_origin()
@@ -357,9 +373,10 @@ def init_routes(app):
         if request.method == "GET":
             token = request.args.get("token")
             email = request.args.get("email")
-            return jsonify({"msg": "successfully got url params."})
+            response = {"reset": "Successfully passed url params"}
+            return make_response(jsonify(response), 200)
 
-        else:
+        if request.method == "POST":
             data = request.get_json()
             token = data.get('token')
             email = data.get('email')
@@ -372,34 +389,42 @@ def init_routes(app):
             if reset_token:
                 reset_token.delete()
             else:
-                return jsonify({"msg": "Access to reset link has expired."})
+                response = {"reset": "Access to reset link has expired"}
+                return make_response(jsonify(response), 201)
             
             if current_time - reset_token.created_at > expiration_time:
                 reset_token.delete()
-                return jsonify({"msg": "Reset token has expired."})
+                response = {"reset": "Reset token has expired"}
+                return make_response(jsonify(response), 201)
             
             account = Account.query.filter_by(email=email).first()
             if not account:
-                return jsonify({"msg": "User does not exist."})
+                response = {"reset": "User does not exist"}
+                return make_response(jsonify(response), 201)
 
             new_password = data.get("password")
             new_passwordR = data.get("passwordRepeat")
 
             if not new_password or not new_passwordR:
-                return jsonify({"msg": "Missing data."})
+                response = {"reset": "Missing data"}
+                return make_response(jsonify(response), 201)
 
             if len(new_password) < 4:
-                return jsonify({"msg": "Password must be at least 4 characters long."})
+                response = {"reset": "Password must be at least 4 characters long"}
+                return make_response(jsonify(response), 201)
 
             if new_password == new_passwordR:
                 account.update_password(new_password)
                 account.save()
-                return jsonify({"msg": "Password successfully updated."})
+                response = {"reset": "Password successfully updated"}
+                return make_response(jsonify(response), 200)
 
             else:
-                return jsonify({"msg": "Passwords do not match."})
+                response = {"reset": "Passwords do not match"}
+                return make_response(jsonify(response), 201)
 
     @app.route("/check_auth", methods=["GET"])
     @jwt_required()
     def checking():
-        return jsonify(auth=True)
+        response = {"auth": True}
+        return make_response(jsonify(response), 200)
