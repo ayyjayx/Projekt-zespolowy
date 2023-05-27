@@ -1,30 +1,26 @@
 import React from 'react';
-import jwt_decode from 'jwt-decode';
-import { setAuthToken } from './Login';
-import Button from 'react-bootstrap/Button';
+// import { setAuthToken } from './Login';
 import board from "../assets/board.avif";
+import { isLoggedIn } from '../utils/isLoggedIn';
+// import { hasJWT } from '../utils/hasJWT.jsx';
+// import Cookies from 'universal-cookie';
 
-const token = localStorage.getItem("token");
-if (token) {
-    setAuthToken(token);
-}
-
-function LogOut() {
-    localStorage.removeItem("token");
-    setAuthToken(false);
-    window.location.href = '/'
-}
+// const cookies = new Cookies();
+// const token = cookies.get("access_token");
+// if (token) {
+//     setAuthToken(token);
+// }
 
 function LoggedHome() {
-    let username = jwt_decode(token, { header: true })
-    console.log(username);
+    isLoggedIn() ? '' : window.location.href = '/';
+    // hasJWT() ? '' : window.location.href = '/';
+    // console.log(hasJWT());
     return (
         <>
             <header className='App-header'>szaszki.pl</header>
             <div className="center">
-                <img src={board} width="700" height="500" alt=""></img>
-                <h1>Jesteś zalogowany</h1>
-                <Button onClick={LogOut}>Wyloguj</Button>
+                <img src={board} width="500" height="500" alt=""></img>
+                <h1>¯\_(ツ)_/¯</h1>
             </div>
         </>
     );

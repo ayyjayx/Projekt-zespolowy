@@ -1,21 +1,26 @@
 from datetime import datetime
-
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
 
-class JWTTokenBlocklist(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    jwt_token = db.Column(db.String(), nullable=False)
-    created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+class ResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    token = db.Column(db.String(1000), nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
 
-    def __repr__(self):
-        return f"Expired Token: {self.jwt_token}"
+    def __init__(self, username, token):
+        self.username = username
+        self.token = token
 
     def save(self):
         db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
         db.session.commit()
 
 
@@ -23,10 +28,9 @@ class Account(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(50), nullable=False, unique=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
-    password = db.Column(db.String(256), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     created_on = db.Column(db.DateTime(), default=datetime.utcnow)
     admin = db.Column(db.Boolean(), default=False)
-    jwt_active = db.Column(db.Boolean())
 
     def __repr__(self):
         return f"User {self.username}"
@@ -47,11 +51,12 @@ class Account(db.Model):
     def update_username(self, new_username):
         self.username = new_username
 
-    def check_jwt(self):
-        return self.jwt_active
+    def update_password(self, new_password):
+        self.password = generate_password_hash(new_password)
 
-    def set_jwt(self, set_status):
-        self.jwt_active = set_status
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
 
 class Player(db.Model):
@@ -59,8 +64,8 @@ class Player(db.Model):
     player_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
     game_id = db.Column(db.Integer(), db.ForeignKey("game.id"), nullable=False)
 
-    player_game_id_fkey = db.relationship("Game", foreign_keys="player.game_id")
-    player_player_id_fkey = db.relationship("Account", foreign_keys="player.player_id")
+    player_game_id_fkey = db.relationship("Game", foreign_keys="Player.game_id")
+    player_player_id_fkey = db.relationship("Account", foreign_keys="Player.player_id")
 
 
 class Result(db.Model):
@@ -77,10 +82,28 @@ class Game(db.Model):
     player_two_id = db.Column(db.Integer(), db.ForeignKey("account.id"), nullable=False)
     result_id = db.Column(db.Integer(), db.ForeignKey("result.id"), nullable=True)
 
-    game_result_id_fkey = db.relationship("Result", foreign_keys="game.result_id")
+    game_result_id_fkey = db.relationship("Result", foreign_keys="Game.result_id")
     game_player_one_id_fkey = db.relationship(
-        "Account", foreign_keys="game.player_one_id"
+        "Account", foreign_keys="Game.player_one_id"
     )
     game_player_two_id_fkey = db.relationship(
-        "Account", foreign_keys="game.player_two_id"
+        "Account", foreign_keys="Game.player_two_id"
     )
+    
+class ResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    token = db.Column(db.String(1000), nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+
+    def __init__(self, username, token):
+        self.username = username
+        self.token = token
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()

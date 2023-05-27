@@ -1,23 +1,12 @@
+from config import DevelopmentConfig
 from flask import Flask
+from flask_cors import CORS
 from routes import init_routes
-from config import Config
-
-# import os
-
-# folder templates jest w folderze frontend:
-# template_dir = os.path.abspath('../../frontend/src')
 
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    # po dodaniu templates do frontend:
-    # app = Flask(__name__, template_folder=template_dir)
-    app.config.from_object(Config)
-
-    app.config[
-        "SQLALCHEMY_DATABASE_URI"
-    ] = "postgresql://postgres:projekt1234@database:5432/postgres"
+    app.config.from_object(DevelopmentConfig)
 
     init_routes(app)
-
     return app

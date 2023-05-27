@@ -1,46 +1,16 @@
-from datetime import datetime, timedelta
-import jwt
+from datetime import datetime, timezone, timedelta
+
 from config import Config
-from flask import jsonify, make_response, request
-from models import Account, db, JWTTokenBlocklist
-from functools import wraps
-
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        if "Authorization" in request.headers:
-            token = request.headers["Authorization"]
-        if not token:
-            return jsonify({"message": "Token is missing !!"}), 400
-
-        try:
-            data = jwt.decode(token, Config.SECRET_KEY)
-            current_user = Account.query.filter_by(id=data["id"]).first()
-
-            if not current_user:
-                return jsonify({"message": "Account does not exist."}), 400
-
-            token_expired = db.session.query(JWTTokenBlocklist.id)\
-                .filter_by(jwt_token=token).scalar()
-
-            if token_expired is not None:
-                return jsonify({"message": "Token expired."}), 400
-
-            if not current_user.check_jwt():
-                return jsonify({"message": "Token expired."}), 400
-
-        except:
-            return jsonify({"message": "Token is invalid."}), 401
-
-        return f(current_user, *args, **kwargs)
-
-    return decorated
-
+from flask import jsonify, make_response, render_template_string, request
+from flask_cors import cross_origin
+from flask_jwt_extended import (create_access_token, create_refresh_token,
+                                get_jwt, get_jwt_identity, jwt_required,
+                                unset_jwt_cookies, get_csrf_token, set_access_cookies, set_refresh_cookies)
+from flask_mail import Mail, Message
+from models import Account, ResetToken
 
 def init_routes(app):
-    @app.route("/home", methods=["GET", "POST"])
+    @app.route("/loggedhome", methods=["GET", "POST"])
     def home():
         data = request.get_data()
         return jsonify(data)
@@ -55,22 +25,26 @@ def init_routes(app):
             passwordRepeat = data.get("passwordRepeat")
 
             if not username or not password or not email or not passwordRepeat:
-                return make_response("Missing data", 401)
+                return make_response("Missing data", 202)
 
             if len(password) < 4:
-                return make_response("Password must be >=4 characters long", 411)
+                return make_response("Password must be >=4 characters long", 202)
 
             if password == passwordRepeat:
-                account_exists = Account.query.filter_by(email=email).first()
-                if not account_exists:
-                    new_account = Account(
-                        username=username,
-                        email=email
-                    )
-                    new_account.set_password(password)
-                    new_account.save()
-
-                    return make_response("Successfully registered.", 201)
+                username_exists = Account.query.filter_by(username=username).first()
+                email_exists = Account.query.filter_by(email=email).first()
+                if not username_exists:
+                    if not email_exists:
+                        new_account = Account(username=username, email=email)
+                        new_account.set_password(password)
+                        new_account.save()
+                        return make_response(
+                            "Successfully registered.", 201
+                        )
+                    else:
+                        return make_response(
+                            "Ten email jest już przypisany do konta", 202
+                        )
                 else:
                     return make_response("Account already exists.", 202)
             else:
@@ -80,63 +54,228 @@ def init_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        if request.method == 'POST':
+        if request.method == "POST":
             data = request.get_json()
             username = data.get("username")
             password = data.get("password")
 
             if not username or not password:
-                return make_response("Missing data.", 401)
+                return make_response("Missing data.", 201)
 
             account = Account.query.filter_by(username=username).first()
 
             if not account:
-                return make_response("Account does not exist.", 401)
+                return make_response("Account does not exist.", 200)
 
             if account.check_password(password):
-                token = jwt.encode({
-                    "id": account.id,
-                    "username": account.username,
-                    "admin": account.admin,
-                    "exp": datetime.utcnow() + timedelta(minutes=30)},
-                    Config.SECRET_KEY
+                access_token = create_access_token(identity=account.id)
+                refresh_token = create_refresh_token(identity=account.id)
+                response = jsonify(
+                    access_token=access_token, refresh_token=refresh_token
                 )
-                return jsonify({"token": token}), 300
+                response = jsonify({'login': True})
+                set_access_cookies(response, access_token)
+                set_refresh_cookies(response, refresh_token)
+                
+                return response
 
-            return make_response("Incorrect Password.", 403)
+            return make_response("Incorrect Password.", 200)
         else:
-            return make_response("Use POST", 200)
+            return make_response("Use POST", 201)
 
-    @app.route("/logout", methods=["GET", "POST"])
-    @token_required
+    @app.route("/logout", methods=["POST"])
     def logout():
-        token = request.headers["Authorization"]
+        response = jsonify({'logout': True})
+        unset_jwt_cookies(response)
+        return response
 
-        jwt_block = JWTTokenBlocklist(jwt_token=token)
-        jwt_block.save()
+    @app.route("/profile", methods=["GET"])
+    @jwt_required()
+    def show_account():
+        current_user = get_jwt_identity()
+        account = Account.query.get(current_user)
+        
+        if not account:
+            return make_response("Account does not exist.", 404)
 
-        return make_response("Token expired.", 200)
+        return (
+            jsonify(
+                {
+                    "id": account.id,
+                    "email": account.email,
+                    "username": account.username,
+                    "created_on": account.created_on,
+                }
+            ),
+            201,
+        )
 
-    @app.route("/admin/accounts/edit/<int:account_id>", methods=["GET", "POST"])
-    @token_required
-    def edit_account(account_id):
-        account = Account.query.filter_by(id=account_id).first()
+    @app.route("/profile/update", methods=["GET", "POST"])
+    @jwt_required()
+    @cross_origin(supports_credentials=True)
+    def edit_account():
+        payload = request.get_json()
+        id = payload.get("id")
+        new_username = payload.get("username")
+        new_email = payload.get("email")
+        password = payload.get("password")
+        account = Account.query.filter_by(id=id).first()
 
+        if not account:
+            return make_response("Użytkownik nie istnieje.", 201)
+
+        if request.method == "POST":
+            new_username = payload.get("username")
+            new_email = payload.get("email")
+            password = payload.get("password")
+
+            if account.check_password(password):
+                if new_username != "":
+                    username_exists = Account.query.filter_by(username=new_username).first()
+                    if not username_exists:
+                        account.update_username(new_username)
+                    else:
+                        return make_response("User already exists")
+
+                if new_email != "":
+                    email_exists = Account.query.filter_by(email=new_email).first()
+                    if not email_exists:
+                        account.update_email(new_email)
+                    else:
+                        return make_response("Email already used")
+
+                account.save()
+                response = make_response("Dane konta zaktualizowane", 200)
+                return response
+
+            return make_response("Niepoprawne hasło.", 201)
+
+        return (
+            jsonify(
+                {"id": account.id, "email": account.email, "username": account.username}
+            ),
+            201,
+        )
+
+    @app.route("/profile/delete", methods=["DELETE"])
+    @jwt_required()
+    @cross_origin(supports_credentials=True)
+    def delete_account():
+        current_user = get_jwt_identity()
+        account = Account.query.get(current_user)
         if not account:
             return make_response("Account does not exist", 404)
 
-        if request.method == 'POST':
+        account.delete()
+
+        return make_response("Account successfully deleted.", 200)
+
+    @app.route("/refresh", methods=["POST"])
+    @jwt_required(refresh=True)
+    def refresh():
+        current_user = get_jwt_identity()
+        # account = Account.query.get(current_user)
+        access_token = create_access_token(identity=current_user)
+        response = jsonify({'refresh': True})
+        set_access_cookies(response, access_token)
+        return response
+
+    @app.route("/reset_send_email", methods=["GET", "POST"])
+    def reset():
+        try:
             data = request.get_json()
-            new_username = data.get("username")
-            new_email = data.get("email")
+            email = data.get("email")
+            account = Account.query.filter_by(email=email).first()
 
-            account.update_email(new_email)
-            account.update_username(new_username)
-            account.save()
+            reset_token = create_access_token(identity=account.id)
+            newResetToken = ResetToken(username=account.username, token=reset_token)
+            newResetToken.save()
 
-            return make_response("Account successfully updated.", 200)
+            with app.app_context():
+                mail = Mail(app)
+                msg = Message()
+                msg.subject = "Szaszki Password Reset"
+                msg.sender = Config.MAIL_USERNAME
+                msg.recipients = [email]
+                msg.html = render_template_string(
+                    """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Zapomniane Hasło - Szaszki</title>
+                        </head>
+                        <body>
+                            <h1>Resetowanie Hasła</h1>
+                            <p>Drogi Użytkowniku {{ account }},</p>
+                            <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
+                            <p>Żeby zresetować hasło kliknij w poniższy link:</p>
+                            <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
+                            <p>have fun baby,</p>
+                            <p>The Szaszki Team</p>
+                        </body>
+                        </html>
+                    """,
+                    account=account.username,
+                    token=reset_token,
+                    email=email
+                )
+                mail.send(msg)
 
-        return jsonify({
-            "id": account.id,
-            "email": account.email,
-            "username": account.username}), 200
+            return make_response("Email has been sent.", 201)
+        except:
+            return make_response("Could not send email.", 230)
+
+    @app.route("/reset_password", methods=["GET", "POST"])
+    @cross_origin()
+    def reset_password():
+        token = None
+
+        if request.method == "GET":
+            token = request.args.get("token")
+            email = request.args.get("email")
+            return jsonify({"msg": "successfully got url params."})
+
+        else:
+            data = request.get_json()
+            token = data.get('token')
+            email = data.get('email')
+            
+            reset_token = ResetToken.query.filter_by(token=token).first()
+
+            expiration_time = timedelta(hours=1)
+            current_time = datetime.utcnow()
+
+            if reset_token:
+                reset_token.delete()
+            else:
+                return jsonify({"msg": "Access to reset link has expired."})
+            
+            if current_time - reset_token.created_at > expiration_time:
+                reset_token.delete()
+                return jsonify({"msg": "Reset token has expired."})
+            
+            account = Account.query.filter_by(email=email).first()
+            if not account:
+                return jsonify({"msg": "User does not exist."})
+
+            new_password = data.get("password")
+            new_passwordR = data.get("passwordRepeat")
+
+            if not new_password or not new_passwordR:
+                return jsonify({"msg": "Missing data."})
+
+            if len(new_password) < 4:
+                return jsonify({"msg": "Password must be at least 4 characters long."})
+
+            if new_password == new_passwordR:
+                account.update_password(new_password)
+                account.save()
+                return jsonify({"msg": "Password successfully updated."})
+
+            else:
+                return jsonify({"msg": "Passwords do not match."})
+
+    @app.route("/check_auth", methods=["GET"])
+    @jwt_required()
+    def checking():
+        return jsonify(auth=True)

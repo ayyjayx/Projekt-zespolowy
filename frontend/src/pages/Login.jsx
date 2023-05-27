@@ -3,15 +3,6 @@ import { Link } from "react-router-dom";
 import Button from 'react-bootstrap/Button'
 import axios from 'axios';
 
-
-export const setAuthToken = token => {
-    if (token) {
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
-    else
-        delete axios.defaults.headers.common["Authorization"];
-}
-
 function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -24,24 +15,24 @@ function Login() {
             password: password,
         }
 
-        axios.post("http://localhost:5000/login", loginPayload).then(response => {
-            //get token from response
-            const token = response.data.token;
-
-            //set JWT token to local
-            localStorage.setItem("token", token);
-
-            //set token to axios common header
-            setAuthToken(token);
-
-            console.log(response);
-            response.status === 201 ?
-                window.location.href = '/loggedhome'
-                :
-                setLoginStatus('Logowanie nie powiodło się. Spróbuj ponownie')
-
-        }).catch(err => console.log(err));
+        axios.post("http://localhost:5000/login", loginPayload, {
+            withCredentials: true,
+        })
+            .then(response => {
+                if (response.status === 201) {
+                    setLoginStatus(response.data);
+                }
+                else {
+                    console.log(response.headers);
+                    window.location.href = '/loggedhome';
+                }
+            }).catch(err => console.log(err));
     };
+
+    const handleReset = () => {
+        window.location.href = 'reset_send_email'
+    };
+
     return (
         <><header className="App-header">
             szaszki.pl
@@ -64,6 +55,7 @@ function Login() {
                             <Button variant="Primary" className="btn">Nie masz konta?</Button>
                         </Link>
                         <Button variant="Primary" type="submit" className="btn float-right">Zaloguj</Button>
+                        <Button variant="Primary" className="btn" onClick={handleReset}>Zapomniałeś hasło?</Button>
                     </div>
                     <p>{loginStatus}</p>
                 </form>

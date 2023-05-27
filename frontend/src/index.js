@@ -8,6 +8,11 @@ import Registration from "./pages/Registration";
 import LoggedHome from "./pages/LoggedHome";
 import Profile from './pages/Profile';
 import About from './pages/About';
+import ProfileUpdate from './pages/ProfileUpdate';
+import ProfileDelete from './pages/ProfileDelete';
+import PasswordReset from './pages/PasswordReset';
+import ResetEmail from './pages/ResetEmail';
+import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
   return (
@@ -20,13 +25,15 @@ export default function App() {
           <Route path="loggedhome" element={<LoggedHome />} />
           <Route path="profile" element={<Profile />} />
           <Route path="about" element={<About />} />
+          <Route path="profile/update" element={<ProfileUpdate />} />
+          <Route path ="profile/delete" element={<ProfileDelete />} />
+          <Route path ="reset_password" element={<PasswordReset />} />
+          <Route path ="reset_send_email" element={<ResetEmail />} />
+          <Route path ="ComingSoon" element={<ComingSoon/>} />
         </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
-const container = document.getElementById("root");
-const root = ReactDOMClient.createRoot(container);
-root.render(<App />);
-
+ReactDOMClient.createRoot(document.getElementById("root")).render(<App />);
