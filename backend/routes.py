@@ -253,7 +253,7 @@ def init_routes(app):
         account = Account.query.filter_by(id=id).first()
 
         if not account:
-            return make_response("Użytkownik nie istnieje.", 201)
+            return make_response("Account does not exist.", 201)
 
         if request.method == "POST":
             new_username = payload.get("username")
@@ -297,7 +297,7 @@ def init_routes(app):
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
         if not account:
-            return make_response("Account does not exist", 404)
+            return make_response("Account does not exist.", 404)
 
         account.delete()
 
