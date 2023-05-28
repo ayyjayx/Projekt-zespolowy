@@ -1,6 +1,8 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.ext.mutable import MutableList
 
 db = SQLAlchemy()
 
@@ -66,7 +68,7 @@ class Game(db.Model):
     player_one_id = db.Column(db.Integer(), nullable=False)
     player_two_id = db.Column(db.Integer(), nullable=True)
     result = db.Column(db.String(), nullable=True, default=None)
-    pgn = db.Column(db.String(), nullable=True)
+    moves = db.Column(MutableList.as_mutable(postgresql.ARRAY(db.String())), default=[], nullable=True)
 
     def delete(self):
         db.session.delete(self)
@@ -74,9 +76,6 @@ class Game(db.Model):
 
     def update_fen(self, new_fen):
         self.fen = new_fen
-
-    def update_pgn(self, new_pgn):
-        self.pgn = new_pgn
 
     def save(self):
         db.session.add(self)
@@ -88,12 +87,15 @@ class Game(db.Model):
     def set_result(self, outcome):
         self.result = outcome
 
+    def add_move(self, move):
+        self.moves.append(move)
+
     def to_dict(self):
         return {
             'id': self.id,
             'start_time': self.start_time.strftime("%H:%M %d %B %Y"),
-            'end_time': self.end_time.strftime("%H:%M %d %B %Y"),
+            'end_time': self.end_time,
             'fen': self.fen,
             'result': self.result,
-            'pgn': self.pgn
+            'san': ','.join(self.moves) if self.moves else []
         }
