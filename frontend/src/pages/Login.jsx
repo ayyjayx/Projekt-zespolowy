@@ -52,10 +52,10 @@ function Login() {
                     </div>
                     <div className="footer">
                         <Link to='/registration'>
-                            <Button variant="Primary" className="btn">Nie masz konta? Zarejestruj się!</Button>
+                            <Button variant="Primary" className="btn">Nie masz konta?</Button>
                         </Link>
-                        <Button variant="Primary" type="submit" className="btn">Zaloguj</Button>
-                        <Button onClick={handleReset}>Zapomniane Hasło</Button>
+                        <Button variant="Primary" type="submit" className="btn float-right">Zaloguj</Button>
+                        <Button variant="Danger" className="btn btn-danger" onClick={handleReset}>Zapomniałeś hasło?</Button>
                     </div>
                     <p>{loginStatus}</p>
                 </form>
