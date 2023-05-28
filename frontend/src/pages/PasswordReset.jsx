@@ -70,7 +70,7 @@ function PasswordReset() {
                     <div className="footer">
                         <Button variant="Primary" type="submit" className="btn">Zmień dane</Button>
                         <Link to='/login'>
-                            <Button variant="Primary" className="btn">Powrót do logowania</Button>
+                            <Button variant="Primary" className="btn float-right">Powrót do logowania</Button>
                         </Link>
                     </div>
                     <p>{resetStatus}</p>

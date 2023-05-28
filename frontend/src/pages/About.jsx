@@ -32,7 +32,7 @@ function About() {
                     </div>
                     <div className='picture'>
                         <img src={kuba} width="40" height="40" className='d-inline-block align top'></img>
-                        Jakub Kordowski: Database/Frontend
+                        Jakub Kordowski: Frontend
                     </div>
                 </form>
             </div>

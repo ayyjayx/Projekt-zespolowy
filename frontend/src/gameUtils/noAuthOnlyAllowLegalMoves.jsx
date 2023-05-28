@@ -3,12 +3,9 @@ import { Chess } from 'chess.js';
 import 'chessboard-element';
 import axios from "axios";
 
-// add saving FEN to localStorage
-// 
 export function noAuthOnlyAllowLegalMoves() {
     const game = new Chess();
     const saved_fen = localStorage.getItem("FEN");
-    // console.log(saved_fen);
     if (saved_fen) {
         game.load(saved_fen)
     }
@@ -19,7 +16,6 @@ export function noAuthOnlyAllowLegalMoves() {
     useEffect(() => {
         React.board.addEventListener('drag-start', (e) => {
             const { piece } = e.detail;
-            // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
                 localStorage.removeItem("FEN");
@@ -27,7 +23,6 @@ export function noAuthOnlyAllowLegalMoves() {
                 return;
             }
 
-            // only pick up pieces for the side to move
             if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
                 (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
                 e.preventDefault();
@@ -41,12 +36,11 @@ export function noAuthOnlyAllowLegalMoves() {
         React.board.addEventListener('drop', (e) => {
             const { source, target, setAction } = e.detail;
 
-            // see if the move is legal
             try {
                 const move = game.move({
                     from: source,
                     to: target,
-                    promotion: 'q' // always promote to a queen for simplicity
+                    promotion: 'q'
                 });
 
                 if (game.isGameOver()) {
@@ -57,7 +51,6 @@ export function noAuthOnlyAllowLegalMoves() {
                         over: true,
                     });
                     localStorage.removeItem("FEN");
-                    // e.preventDefault();
                     return;
                 }
 
@@ -80,8 +73,6 @@ export function noAuthOnlyAllowLegalMoves() {
     }, []);
 
     useEffect(() => {
-        // update the board position after the piece snap
-        // for castling, en passant, pawn promotion
         React.board.addEventListener('snap-end', () => {
             React.board.setPosition(game.fen());
         });
@@ -95,16 +86,11 @@ export function noAuthOnlyAllowLegalMoves() {
         }
 
         if (game.isCheckmate()) {
-            // checkmate?
             status = `Game over, ${moveColor} is in checkmate.`;
         } else if (game.isDraw()) {
-            // draw?
             status = 'Game over, drawn position';
         } else {
-            // game still on
             status = `${moveColor} to move`;
-
-            // check?
             if (game.inCheck()) {
                 status += `, ${moveColor} is in check`;
             }

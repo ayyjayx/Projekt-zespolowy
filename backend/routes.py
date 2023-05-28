@@ -12,23 +12,23 @@ import chess
 import chess.pgn
 import uuid
 
+pgn = chess.pgn.Game()
+
 def init_routes(app):
-    pgn = chess.pgn.Game()
     @app.route("/creategame", methods=["POST", "GET"]) # create a new game for logged-in user
     @jwt_required()
     def newgame_auth():
         current_user = get_jwt_identity()
         current_game = Game.query.filter_by(player_one_id=current_user).first()
 
-        if current_game:
+        if current_game and not current_game.result:
             return jsonify({"id": current_game.id})
         else:
             board = chess.Board()
             new_game = Game(
                 id = str(uuid.uuid4().hex),
                 fen = board.fen(),
-                player_one_id = current_user,
-                pgn = str(pgn)
+                player_one_id = current_user
             )
             new_game.save()
             return jsonify({"id": new_game.id})
@@ -36,8 +36,6 @@ def init_routes(app):
     @app.route("/game", methods=["POST", "GET"]) # validate and save moves for logged-in user
     @jwt_required()
     def game():
-        pgn.headers["Event"] = "Solo Game"
-        # pgn.headers["Date"] = datetime.utcnow
         current_user = get_jwt_identity()
         game_id = request.args.get("gameId")
         game = Game.query.filter_by(id=game_id).first()
@@ -53,7 +51,7 @@ def init_routes(app):
             return jsonify({"FEN": fen})
 
         data = request.get_json()
-        move = data.get("move") # in uci
+        move = data.get("move")
         reverse = data.get("reverse")
 
         if reverse:
@@ -66,39 +64,27 @@ def init_routes(app):
                 return jsonify({"move": "cannot reverse"})
             
             return jsonify({"move": "reversed"})
-        
-        
 
         if move:
+            game.add_move(board.san(chess.Move.from_uci(move)))
             if chess.Move.from_uci(move) in board.legal_moves:
                 try:
                     board.push(board.parse_uci(move))
 
                     fen = board.fen()
                     game.update_fen(fen)
-                    game.save()
 
                     if board.is_game_over():
                         if board.result() == '1-0':
                             result = "WHITE WON"
-                            pgn.headers["Result"] = "1-0"
                         elif board.result() == '0-1':
                             result = "BLACK WON"
-                            pgn.headers["Result"] = "0-1"
                         else:
                             result = "DRAW"
-                            pgn.headers["Result"] = "1/2-1/2"
 
                         game.set_result(outcome=result)
                         game.set_end_time()
-                        game.save()
-                    
-                    pgn.end().add_main_variation(chess.Move.from_uci(move))
-                    # pgn2 = str(pgn)
-                    # print(pgn)
-                    # print(pgn2.split("\n"))
-                    # print(pgn2.split("\n")[0])
-                    game.update_pgn(str(pgn))
+
                     game.save()
 
                 except ValueError:

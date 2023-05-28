@@ -91,7 +91,7 @@ function ProfileUpdate() {
                     <div className="footer">
                         <Button variant="Primary" type="submit" className="btn">Zmień dane</Button>
                         <Link to='/reset_send_email'>
-                            <Button variant="Primary" className="btn">Resetuj hasło</Button>
+                            <Button variant="Primary" className="btn float-right">Resetuj hasło</Button>
                         </Link>
                     </div>
                     <p>{updateStatus}</p>

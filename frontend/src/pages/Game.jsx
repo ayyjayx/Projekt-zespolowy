@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, board } from 'react';
 import 'chessboard-element';
 import { useParams } from 'react-router-dom';
 import './style.css';
@@ -6,12 +6,26 @@ import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 import { getFenPosition } from '../gameUtils/onlyAllowLegalMoves';
 // import { hasJWT } from '../utils/hasJWT';
 
+function importAll(r) {
+    let images = {};
+    r.keys().map((item) => { images[item.replace('./', '')] = r(item); });
+    return images;
+}
+
+const images = importAll(require.context('../assets/pieces', false, /\.svg$/));
+
 function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
     onlyAllowLegalMoves(gameId);
     const position = getFenPosition(gameId)
-    // console.log(posFen)
+
+    useEffect(() => {
+        if (!board) return;
+        board.pieceTheme = (piece) => {
+            return images[`${piece}.svg`];
+        }
+    }, [board])
 
     return (
         <div className='center'>
@@ -23,7 +37,7 @@ function Game() {
                 ref={(e) => React.board = e}
             >
             </chess-board>
-            <button onClick={() => React.board.flip()}>Flip Board</button>
+            <button onClick={() => board.flip()}>Flip Board</button>
         </div>
     );
 }

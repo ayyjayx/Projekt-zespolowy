@@ -1,11 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald&display=swap');
+
 body{
-    /* background: #bdc3c7;  fallback for old browsers */
-    /* background: -webkit-linear-gradient(to right, #2c3e50, #bdc3c7);  Chrome 10-25, Safari 5.1-6 */
-    /* background: linear-gradient(to right, #2c3e50, #bdc3c7); W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
     background: rgb(82, 194, 231);
 }
 
 .form{
+    font-family: 'Oswald';
     background-color: rgb(203, 236, 247);
     border-radius: 5px;
     width: 400px;
@@ -14,6 +14,7 @@ body{
 }
 
 .form-two{
+    font-family: 'Oswald', cursive;
     background-color: rgb(203, 236, 247);
     border-radius: 5px;
     width: 700px;
@@ -53,6 +54,7 @@ body{
 }
 
 .btn {
+    font-family:'Oswald';
     margin-right: 8px;
     margin-left: 8px;
     text-align: center;
@@ -67,14 +69,18 @@ body{
 
 .sidenav {
     height: 100%;
-    width: 170px;
+    width: 11.5%;
     position: fixed;
     z-index: 1;
     top: 0;
     left: 0;
     background-color: rgb(203, 236, 247);
     overflow-x: hidden;
-    padding-top: 20px;
+    padding-top: 1%;
+}
+
+.navbar {
+    background-color: rgb(203, 236, 247);
 }
 
 .navbar-brand {
@@ -90,9 +96,7 @@ body{
 }
 
 .center {
-    position: fixed;
-    top: 10%;
-    left: 30%;
+    text-align: center;
 }
 
 .dropdown-container {
@@ -104,6 +108,7 @@ body{
 }
 
 chess-board {
-    position: relative;
-    width: 400px;
+    width: 40%;
+    position: absolute;
+    left: 30%;
 }
