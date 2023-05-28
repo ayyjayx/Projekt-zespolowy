@@ -1,8 +1,9 @@
 from app import create_app
 from config import TestingConfig
-from models import Account, db as _db
+from models import Account, ResetToken, Game, db as _db
 import pytest
 from flask_jwt_extended import JWTManager
+import uuid
 
 
 @pytest.fixture
@@ -31,3 +32,15 @@ def new_account():
     account = Account(email="pytest@test.com", username="testuser", admin=False)
     account.set_password("password")
     return account
+
+
+@pytest.fixture
+def new_token():
+    token = ResetToken(username="testuser", token="testtoken")
+    return token
+
+
+@pytest.fixture
+def new_game():
+    game = Game(id=1, fen="new_fen", player_one_id=1)
+    return game
