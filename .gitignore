@@ -4,7 +4,7 @@ frontend/build
 # Ignore pycache
 backend/__pycache__
 backend/migrations/__pycache__
-backend/tests/__pycache__
+backend/tests/__pycache__/
 .pytest_cache
 
 # Ignore auxillary files
