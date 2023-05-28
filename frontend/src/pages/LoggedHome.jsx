@@ -1,28 +1,30 @@
 import React from 'react';
-// import { setAuthToken } from './Login';
-import board from "../assets/board.avif";
-import { isLoggedIn } from '../utils/isLoggedIn';
-// import { hasJWT } from '../utils/hasJWT.jsx';
-// import Cookies from 'universal-cookie';
+// import { isLoggedIn } from '../utils/isLoggedIn';
+import { hasJWT } from '../utils/hasJWT.jsx';
+import axios from 'axios';
+import Button from 'react-bootstrap/Button';
+import './style.css';
 
-// const cookies = new Cookies();
-// const token = cookies.get("access_token");
-// if (token) {
-//     setAuthToken(token);
-// }
 
 function LoggedHome() {
-    isLoggedIn() ? '' : window.location.href = '/';
-    // hasJWT() ? '' : window.location.href = '/';
-    // console.log(hasJWT());
+    hasJWT();
+
+    const handleClick = () => {
+        axios.get('http://localhost:5000/creategame', {
+            withCredentials: true,
+        })
+        .then(response => {
+            const gameId = response.data.id;
+            window.location.href = `game/${gameId}`;
+        });
+
+    }
+
     return (
-        <>
-            <header className='App-header'>szaszki.pl</header>
-            <div className="center">
-                <img src={board} width="500" height="500" alt=""></img>
-                <h1>¯\_(ツ)_/¯</h1>
-            </div>
-        </>
+        <div className='center'>
+            <h2>Jesteś zalogowany</h2>
+            <Button onClick={handleClick}> Zagraj tu! </Button>
+        </div>
     );
 }
 

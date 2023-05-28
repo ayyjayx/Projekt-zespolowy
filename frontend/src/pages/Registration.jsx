@@ -59,7 +59,7 @@ function Registration() {
                     </div>
                     <div className="footer">
                         <Link to='/login'>
-                            <Button variant="Primary" className="btn">Masz konto?</Button>
+                            <Button variant="Primary" className="btn">Masz konto? Zaloguj się!</Button>
                         </Link>
                         <Button variant="Primary" type="submit" className="btn float-right">Zarejestruj</Button>
                     </div>

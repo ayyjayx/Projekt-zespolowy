@@ -8,8 +8,8 @@ function ComingSoon() {
             </header>
             <div className="form-two">
                 <form>
-                    <a className="center-text"><h1>Feature coming SOON!</h1></a>
-                    <a className="center-text"><h2>to a site near YOU!<br></br>Stay Tuned</h2></a>
+                    <a className="center-text"><h1>Podstrona w budowie</h1></a>
+                    <a className="center-text"><h2>Oczekujcie na aktualizację<br></br>Wkrótce!</h2></a>
                 </form>
             </div>
         </>

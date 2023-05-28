@@ -23,10 +23,10 @@ function LogOut() {
 function Navbar() {
     hasJWT() ? isLoggedIn = true : isLoggedIn = false;
     return (
-        <> 
-        <div className="sidenav d-none d-lg-block">
-            <nav className="navbar navbar-expand-lg navbar-light">
-                <ul className="nav flex-column">
+        <>
+            <div className="sidenav d-none d-lg-block">
+                <nav className="navbar navbar-expand-lg navbar-light">
+                    <ul className="nav flex-column">
                         <li className="nav-item">
                             <Link to="/">
                                 <p className="navbar-brand">
@@ -50,12 +50,12 @@ function Navbar() {
                             </div>
                         </li>
                         <li className="nav-item">
-                            <Link to="/ComingSoon">
+                            <Link to="/comingsoon">
                                 <button type="button" className="btn nav-btn btn-warning btn-block mb-1">Puzzle</button>
                             </Link>
                         </li>
                         <li className="nav-item">
-                            <Link to="/ComingSoon">
+                            <Link to="/comingsoon">
                                 <button type="button" className="btn nav-btn btn-warning btn-block mb-1">Samouczek</button>
                             </Link>
                         </li>
@@ -95,16 +95,16 @@ function Navbar() {
                                 </p>
                             </Link>
                         </li>
-                </ul>
-            </nav>
-        </div>
-        <nav className="navbar d-block d-lg-none navbar-expand-lg navbar-light">
-            <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-                <span className="navbar-toggler-icon"></span>
-            </button>
+                    </ul>
+                </nav>
+            </div>
+            <nav className="navbar d-block d-lg-none navbar-expand-lg navbar-light">
+                <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                    <span className="navbar-toggler-icon"></span>
+                </button>
 
-            <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
-                <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
+                <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
+                    <ul className="navbar-nav mr-auto mt-2 mt-lg-0">
                         <li className="nav-item">
                             <Link to="/">
                                 <button type="button" className="btn nav-btn btn-info btn-block mb-1">Main</button>
@@ -124,12 +124,12 @@ function Navbar() {
                             </div>
                         </li>
                         <li className="nav-item">
-                            <Link to="/ComingSoon">
+                            <Link to="/comingsoon">
                                 <button type="button" className="btn nav-btn btn-warning btn-block mb-1">Puzzle</button>
                             </Link>
                         </li>
                         <li className="nav-item">
-                            <Link to="/ComingSoon">
+                            <Link to="/comingsoon">
                                 <button type="button" className="btn nav-btn btn-warning btn-block mb-1">Samouczek</button>
                             </Link>
                         </li>
@@ -162,9 +162,9 @@ function Navbar() {
                                 </Link>
                             </li>
                         )}
-                </ul>
-            </div>
-        </nav>
+                    </ul>
+                </div>
+            </nav>
         </>
     );
 }
