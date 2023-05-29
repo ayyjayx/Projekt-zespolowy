@@ -59,6 +59,7 @@ class Account(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+    
 
 class Game(db.Model):
     id = db.Column(db.String(32), primary_key=True, unique=True, nullable=False)

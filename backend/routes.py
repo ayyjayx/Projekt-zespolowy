@@ -8,12 +8,14 @@ from flask_jwt_extended import (create_access_token, create_refresh_token,get_jw
                                 set_refresh_cookies)
 from flask_mail import Mail, Message
 from models import Account, ResetToken, Game
+# from flask_socketio import SocketIO, emit, join_room
 import chess
 import uuid
 
 pgn = chess.pgn.Game()
 
 def init_routes(app):
+
     @app.route("/creategame", methods=["POST", "GET"]) # create a new game for logged-in user
     @jwt_required()
     def newgame_auth():
@@ -21,7 +23,6 @@ def init_routes(app):
         current_game = Game.query.filter_by(player_one_id=current_user).first()
 
         if current_game and not current_game.result:
-            # tutaj wysyłać listę gier do wyboru?
             response = {"id": current_game.id}
             return make_response(jsonify(response), 200)
         else:
@@ -72,6 +73,7 @@ def init_routes(app):
         
         if move:
             game.add_move(board.san(chess.Move.from_uci(move)))
+            print(board.san(chess.Move.from_uci(move)))
             if chess.Move.from_uci(move) in board.legal_moves:
                 try:
                     board.push(board.parse_uci(move))
@@ -140,7 +142,9 @@ def init_routes(app):
     @jwt_required()
     def mygames():
         current_user = get_jwt_identity()
-        games = Game.query.filter_by(player_one_id=current_user).all()
+        games = Game.query.filter_by(player_one_id=current_user).all() # W
+        games2 = Game.query.filter_by(player_two_id=current_user).all() # B
+        games += games2
         games_dict = [game.to_dict() for game in games]
         response = {"games": games_dict}
         return make_response(jsonify(response), 200)
