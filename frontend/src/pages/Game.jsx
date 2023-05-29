@@ -4,6 +4,9 @@ import { useParams } from 'react-router-dom';
 import './style.css';
 import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 import { getFenPosition } from '../gameUtils/onlyAllowLegalMoves';
+// import { io } from 'socket.io-client';
+
+// let socket;
 // import { hasJWT } from '../utils/hasJWT';
 
 function importAll(r) {
@@ -17,15 +20,13 @@ const images = importAll(require.context('../assets/pieces', false, /\.svg$/));
 function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
-    onlyAllowLegalMoves(gameId);
-    const position = getFenPosition(gameId)
+    console.log('game id in game: ' + gameId);
+    // const [ gameId, setGameId ] = useState('');
+    // console.log(posFen)
+   
 
-    useEffect(() => {
-        if (!board) return;
-        board.pieceTheme = (piece) => {
-            return images[`${piece}.svg`];
-        }
-    }, [board])
+    onlyAllowLegalMoves(gameId);
+    const position = getFenPosition(gameId);
 
     return (
         <div className='center'>
