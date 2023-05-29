@@ -20,8 +20,12 @@ const images = importAll(require.context('../assets/pieces', false, /\.svg$/));
 function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
-    console.log('game id in game: ' + gameId);
-    // const [ gameId, setGameId ] = useState('');
+    useEffect(() => {
+        if (!board) return;
+        board.pieceTheme = (piece) => {
+            return images[`${piece}.svg`];
+        }
+    }, [board])
     // console.log(posFen)
    
 
@@ -39,6 +43,7 @@ function Game() {
             >
             </chess-board>
             <button onClick={() => board.flip()}>Flip Board</button>
+            {/* <button onClick={joinRoom}>Join</button> */}
         </div>
     );
 }
