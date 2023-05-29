@@ -1,30 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
-import axios from "axios";
+// import axios from "axios";
 import { hasJWT } from "../utils/hasJWT";
-import Cookies from 'universal-cookie';
+// import Cookies from 'universal-cookie';
+import { io } from 'socket.io-client';
 
 const game = new Chess();
+// let socket;
+const socket = io("http://localhost:5000");
 
 export function getFenPosition(gameId) {
     const [position, setPosition] = useState(null);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5000/game?gameId=${gameId}`, {
-                    withCredentials: true,
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                });
-                setPosition(response.data.FEN);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-        fetchData();
+        socket.emit("get_position", gameId)
+        socket.on("FEN", (fen) => {
+            setPosition(fen);
+            console.log('position' + position);
+        });
     }, [position]);
 
     return position;
@@ -32,9 +26,9 @@ export function getFenPosition(gameId) {
 
 export function onlyAllowLegalMoves(gameId) {
     hasJWT();
-    const cookies = new Cookies();
-
+    // const cookies = new Cookies();
     const position = getFenPosition(gameId);
+
 
     if (position !== null) {
         game.load(position)
@@ -46,17 +40,10 @@ export function onlyAllowLegalMoves(gameId) {
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
-                axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-
-                    over: true,
-                }, {
-                    withCredentials: true,
-                    headers: {
-                        "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                    }
-                });
-                e.preventDefault();
-                return;
+                socket.emit("game_pvp", {'move':''})
+                socket.on("response", (response) =>{
+                    console.log('gameover' + response);
+                })
             }
 
             // only pick up pieces for the side to move
@@ -86,29 +73,17 @@ export function onlyAllowLegalMoves(gameId) {
                 }
 
                 if (game.isGameOver()) {
-                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        move: move.lan,
-                        over: true,
-                    }, {
-                        withCredentials: true,
-                        headers: {
-                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                        }
-                    });
-                    e.preventDefault();
-                    updateStatus();
-                    return;
+                    socket.emit("game_pvp", {'move':''})
+                    socket.on("response", (response) =>{
+                        console.log('gameover' + response);
+                })
                 }
 
                 else {
-                    axios.post(`http://localhost:5000/game?gameId=${gameId}`, {
-                        move: move.lan,
-                    }, {
-                        withCredentials: true,
-                        headers: {
-                            "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
-                        }
-                    });
+                    socket.emit("game_pvp", {'move': move.lan})
+                    socket.on("response", (response) =>{
+                        console.log('move made' + response);
+                })
                 }
             } catch {
                 setAction('snapback');

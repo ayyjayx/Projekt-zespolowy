@@ -4,14 +4,21 @@ import { useParams } from 'react-router-dom';
 import './style.css';
 import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 import { getFenPosition } from '../gameUtils/onlyAllowLegalMoves';
+// import { io } from 'socket.io-client';
+
+// let socket;
 // import { hasJWT } from '../utils/hasJWT';
 
 function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
-    onlyAllowLegalMoves(gameId);
-    const position = getFenPosition(gameId)
+    console.log('game id in game: ' + gameId);
+    // const [ gameId, setGameId ] = useState('');
     // console.log(posFen)
+   
+
+    onlyAllowLegalMoves(gameId);
+    const position = getFenPosition(gameId);
 
     return (
         <div className='center'>
@@ -24,6 +31,7 @@ function Game() {
             >
             </chess-board>
             <button onClick={() => React.board.flip()}>Flip Board</button>
+            {/* <button onClick={joinRoom}>Join</button> */}
         </div>
     );
 }
