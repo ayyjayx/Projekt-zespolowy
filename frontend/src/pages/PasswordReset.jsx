@@ -20,7 +20,7 @@ function PasswordReset() {
     useEffect(() => {
         axios.get(url)
             .then(response => {
-                console.log(response.data)
+                console.log(response.data.reset)
             })
             .catch(err => { console.log(err) });
     },
@@ -40,7 +40,7 @@ function PasswordReset() {
                 console.log(token);
                 setPassword('');
                 setPasswordRepeat('');
-                setResetStatus(response.data.msg);
+                setResetStatus(response.data.reset);
                 console.log(response.data);
             })
             .catch(err => {

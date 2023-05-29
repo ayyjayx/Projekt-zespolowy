@@ -4,6 +4,9 @@ import { useParams } from 'react-router-dom';
 import './style.css';
 import { onlyAllowLegalMoves } from '../gameUtils/onlyAllowLegalMoves';
 import { getFenPosition } from '../gameUtils/onlyAllowLegalMoves';
+// import { io } from 'socket.io-client';
+
+// let socket;
 // import { hasJWT } from '../utils/hasJWT';
 
 function importAll(r) {
@@ -17,15 +20,17 @@ const images = importAll(require.context('../assets/pieces', false, /\.svg$/));
 function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
-    onlyAllowLegalMoves(gameId);
-    const position = getFenPosition(gameId)
-
     useEffect(() => {
         if (!board) return;
         board.pieceTheme = (piece) => {
             return images[`${piece}.svg`];
         }
     }, [board])
+    // console.log(posFen)
+   
+
+    onlyAllowLegalMoves(gameId);
+    const position = getFenPosition(gameId);
 
     return (
         <div className='center'>
@@ -38,6 +43,7 @@ function Game() {
             >
             </chess-board>
             <button onClick={() => board.flip()}>Flip Board</button>
+            {/* <button onClick={joinRoom}>Join</button> */}
         </div>
     );
 }
