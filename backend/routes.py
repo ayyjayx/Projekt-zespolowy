@@ -12,9 +12,14 @@ from models import Account, ResetToken, Game
 import chess
 import uuid
 
-pgn = chess.pgn.Game()
+# pgn = chess.pgn.Game()
 
 def init_routes(app):
+    @app.route("/get_player", methods=["POST", "GET"])
+    @jwt_required()
+    def get_player():
+        player = get_jwt_identity()
+        return make_response(jsonify(player), 200)
 
     @app.route("/creategame", methods=["POST", "GET"]) # create a new game for logged-in user
     @jwt_required()
