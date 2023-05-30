@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Chess } from 'chess.js';
 import 'chessboard-element';
-// import axios from "axios";
+import axios from "axios";
 import { hasJWT } from "../utils/hasJWT";
 // import Cookies from 'universal-cookie';
 import { io } from 'socket.io-client';
@@ -12,23 +12,40 @@ const socket = io("http://localhost:5000");
 
 export function getFenPosition(gameId) {
     const [position, setPosition] = useState(null);
+    const [playerColor, setPlayerColor] = useState(null);
+    const [playerId, setPlayerId] = useState(null);
 
-    useEffect(() => {
-        socket.emit("get_position", gameId)
-        socket.on("FEN", (fen) => {
-            setPosition(fen);
-            console.log('position' + position);
+    useEffect(() => { // te dwa sockety to chyba jakoś razem, albo odwrotnie
+        axios.get("http://localhost:5000/get_player", {
+            withCredentials: true
+        },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            .then(response => {
+                // console.log(response.data)
+                setPlayerId(response.data)
+            }).catch(err => console.log(err));
+    }, []);
+
+    if (playerId !== null) {
+        socket.emit("get_position", { 'room': gameId, 'move': '', 'playerId': playerId })
+        socket.on("FENandColor", (response) => {
+            setPosition(response.fen);
+            setPlayerColor(response.color);
         });
-    }, [position]);
+    }
 
-    return position;
+    return [position, playerColor];
 }
 
 export function onlyAllowLegalMoves(gameId) {
     hasJWT();
-    // const cookies = new Cookies();
-    const position = getFenPosition(gameId);
-
+    const position = getFenPosition(gameId)[0];
+    const playerColor = getFenPosition(gameId)[1];
+    console.log("playerColor poczatek funkcji: ", playerColor)
 
     if (position !== null) {
         game.load(position)
@@ -40,21 +57,21 @@ export function onlyAllowLegalMoves(gameId) {
             // do not pick up pieces if the game is over
             if (game.isGameOver()) {
                 updateStatus();
-                socket.emit("game_pvp", {'move':''})
-                socket.on("response", (response) =>{
+                socket.emit("game_pvp", { 'room': gameId, 'move': '' })
+                socket.on("response", (response) => {
                     console.log('gameover' + response);
                 })
             }
-
             // only pick up pieces for the side to move
-            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            if ((game.turn() === 'w' && playerColor === 'b') ||
+                (game.turn() === 'b' && playerColor === 'w') ||
+                (game.turn() === 'w' && playerColor === 'w' && piece.search(/^b/) === 0) ||
+                (game.turn() === 'b' && playerColor === 'b' && piece.search(/^w/) === 0)) {
                 e.preventDefault();
                 return;
             }
         });
-
-    }, []);
+    }, [playerColor]);
 
     useEffect(() => {
         React.board.addEventListener('drop', (e) => {
@@ -73,17 +90,13 @@ export function onlyAllowLegalMoves(gameId) {
                 }
 
                 if (game.isGameOver()) {
-                    socket.emit("game_pvp", {'move':''})
-                    socket.on("response", (response) =>{
+                    socket.emit("game_pvp", { 'room': gameId, 'move': '' })
+                    socket.on("response", (response) => {
                         console.log('gameover' + response);
-                })
+                    })
                 }
-
                 else {
-                    socket.emit("game_pvp", {'move': move.lan})
-                    socket.on("response", (response) =>{
-                        console.log('move made' + response);
-                })
+                    socket.emit("game_pvp", { 'room': gameId, 'move': move.lan })
                 }
             } catch {
                 setAction('snapback');
@@ -91,6 +104,12 @@ export function onlyAllowLegalMoves(gameId) {
             updateStatus();
         });
     }, []);
+
+    socket.on("fenResponse", (response) => {
+        console.log('move made: ', response);
+        game.load(response)
+        React.board.setPosition(game.fen());
+    })
 
     useEffect(() => {
         // update the board position after the piece snap
