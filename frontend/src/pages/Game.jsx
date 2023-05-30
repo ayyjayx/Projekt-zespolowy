@@ -27,7 +27,7 @@ function Game() {
         }
     }, [board])
     // console.log(posFen)
-   
+
 
     onlyAllowLegalMoves(gameId);
     const position = getFenPosition(gameId);
@@ -43,7 +43,6 @@ function Game() {
             >
             </chess-board>
             <button onClick={() => board.flip()}>Flip Board</button>
-            {/* <button onClick={joinRoom}>Join</button> */}
         </div>
     );
 }
