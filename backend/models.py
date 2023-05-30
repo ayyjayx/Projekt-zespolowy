@@ -70,6 +70,9 @@ class Game(db.Model):
     player_two_id = db.Column(db.Integer(), nullable=True)
     result = db.Column(db.String(), nullable=True, default=None)
     moves = db.Column(MutableList.as_mutable(postgresql.ARRAY(db.String())), default=[], nullable=True)
+    
+    def set_player_black(self, player):
+        self.player_two_id = player
 
     def delete(self):
         db.session.delete(self)
