@@ -20,7 +20,7 @@ function Registration() {
             passwordRepeat: passwordRepeat
         }
 
-        axios.post("http://localhost:5000/registration", registerPayload)
+        axios.post("http://uwmchess.herokuapp.com/api/registration", registerPayload)
             .then(response => {
                 setRegistrationStatus(response.data.registration)
                 setUsername('');

@@ -45,7 +45,7 @@ export function noAuthOnlyAllowLegalMoves() {
 
                 if (game.isGameOver()) {
                     updateStatus();
-                    axios.post(`http://localhost:5000/game_noauth`, {
+                    axios.post(`http://uwmchess.herokuapp.com/api/game_noauth`, {
                         fen: game.fen(),
                         move: move.lan,
                         over: true,
@@ -57,7 +57,7 @@ export function noAuthOnlyAllowLegalMoves() {
                 else {
                     console.log(move);
                     localStorage.setItem("FEN", game.fen())
-                    axios.post(`http://localhost:5000/game_noauth`, {
+                    axios.post(`http://uwmchess.herokuapp.com/api/game_noauth`, {
                         fen: game.fen(),
                         move: move.lan,
                     });

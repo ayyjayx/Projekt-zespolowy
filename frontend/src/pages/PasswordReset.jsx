@@ -15,7 +15,7 @@ function PasswordReset() {
     const tokenMatch = window.location.href.match(/token=([^&]+)/);
     const token = tokenMatch ? tokenMatch[1] : '';
 
-    const url = `http://localhost:5000/reset_password?token=${token}&email=${email}`;
+    const url = `http://uwmchess.herokuapp.com/api/reset_password?token=${token}&email=${email}`;
 
     useEffect(() => {
         axios.get(url)
@@ -34,7 +34,7 @@ function PasswordReset() {
             passwordRepeat: passwordRepeat,
             token: token
         }
-        axios.post("http://localhost:5000/reset_password", resetPayload)
+        axios.post("http://uwmchess.herokuapp.com/api/reset_password", resetPayload)
             .then(response => {
                 console.log(email);
                 console.log(token);
