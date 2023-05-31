@@ -27,22 +27,53 @@ mail = Mail(app)
 @socketio.on("join")
 def on_join(data): # receive user id
     user = data["user"]
-    # tu musi być sprawdzanie czy jest aktywny room?
-    # aktywny = zgadza się id gracza, trwa dalej gra, jest < 2 osob w pokoju
-    # tylko jeszcze nie mam jest sprawdzic id (idk jak je zapisywac)
-    # room = str(uuid.uuid4().hex)
-    room = 'newRoomTest'
-    current_game = Game.query.filter_by(id=room).first()
-    print(f"client {user} wants to join: {room}")
-    join_room(room)
-    socketio.emit("newgame", room, room=room)
+    game_white = Game.query.filter_by(player_one_id=user).first()
+    game_black = Game.query.filter_by(player_two_id=user).first()
+    waiting_game_exists = Game.query.filter_by(player_two_id=None).first()
+    
+    if waiting_game_exists:
+        if waiting_game_exists.player_one_id != user:
+            room = waiting_game_exists.id
+            print(f"client {user} wants to join: {room}")
+            join_room(room)
+            socketio.emit("newgame", room, room=room)
+        else:
+            print("waiting for player2")
+            socketio.emit("waiting")
+    else:
+        if game_white:
+            if game_white.result:
+                if game_black:
+                    if game_black.result:
+                        room = str(uuid.uuid4().hex)
+                    else:
+                        room = game_black.id
+                else:
+                    room = str(uuid.uuid4().hex)
+            else:
+                room = game_white.id
+            print(f"client {user} wants to join: {room}")
+            join_room(room)
+            socketio.emit("newgame", room, room=room)
+        else:
+            if game_black:
+                if game_black.result:
+                    room = str(uuid.uuid4().hex)
+                else:
+                    room = game_black.id
+            else:
+                room = str(uuid.uuid4().hex)
+            print(f"client {user} wants to join: {room}")
+            join_room(room)
+            socketio.emit("newgame", room, room=room)
+        socketio.emit("waiting")
 
 @socketio.on("get_position") # get replacement
 def get_position(data):
     room = data['room']
     playerId = data['playerId']
     game = Game.query.filter_by(id=room).first()
-    is_white = Game.query.filter_by(player_one_id=playerId).first()
+    is_white = (game.player_one_id == playerId)
     if is_white:
         response = {"fen": game.fen, "color": "w"}
         emit("FENandColor", response)
