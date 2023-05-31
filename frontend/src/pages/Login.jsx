@@ -15,7 +15,7 @@ function Login() {
             password: password,
         }
 
-        axios.post("http://localhost:5000/login", loginPayload, {
+        axios.post("http://uwmchess.herokuapp.com/api/login", loginPayload, {
             withCredentials: true,
         })
             .then(response => {

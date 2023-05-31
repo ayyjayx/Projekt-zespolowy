@@ -1,27 +1,36 @@
+import uuid
 from datetime import datetime, timedelta
 
-from config import Config
-from flask import jsonify, make_response, render_template_string, request
-from flask_cors import cross_origin
-from flask_jwt_extended import (create_access_token, create_refresh_token,get_jwt_identity,
-                                jwt_required, unset_jwt_cookies, set_access_cookies,
-                                set_refresh_cookies)
-from flask_mail import Mail, Message
-from models import Account, ResetToken, Game
 # from flask_socketio import SocketIO, emit, join_room
 import chess
-import uuid
+from config import Config
+from flask import jsonify, make_response, render_template_string, request
+from flask.helpers import send_from_directory
+from flask_cors import cross_origin
+from flask_jwt_extended import (create_access_token, create_refresh_token,
+                                get_jwt_identity, jwt_required,
+                                set_access_cookies, set_refresh_cookies,
+                                unset_jwt_cookies)
+from flask_mail import Mail, Message
+from models import Account, Game, ResetToken
 
 # pgn = chess.pgn.Game()
 
+
 def init_routes(app):
-    @app.route("/get_player", methods=["POST", "GET"])
+    @app.route("/")
+    def serve():
+        return send_from_directory(app.static_folder, "index.html")
+
+    @app.route("/api/get_player", methods=["POST", "GET"])
     @jwt_required()
     def get_player():
         player = get_jwt_identity()
         return make_response(jsonify(player), 200)
 
-    @app.route("/creategame", methods=["POST", "GET"]) # create a new game for logged-in user
+    @app.route(
+        "/api/creategame", methods=["POST", "GET"]
+    )  # create a new game for logged-in user
     @jwt_required()
     def newgame_auth():
         current_user = get_jwt_identity()
@@ -33,15 +42,15 @@ def init_routes(app):
         else:
             board = chess.Board()
             new_game = Game(
-                id = str(uuid.uuid4().hex),
-                fen = board.fen(),
-                player_one_id = current_user
+                id=str(uuid.uuid4().hex), fen=board.fen(), player_one_id=current_user
             )
             new_game.save()
             response = {"id": new_game.id}
             return make_response(jsonify(response), 200)
-    
-    @app.route("/game", methods=["POST", "GET"]) # validate and save moves for logged-in user
+
+    @app.route(
+        "/api/game", methods=["POST", "GET"]
+    )  # validate and save moves for logged-in user
     @jwt_required()
     def game():
         current_user = get_jwt_identity()
@@ -51,8 +60,8 @@ def init_routes(app):
         if current_user != (game.player_one_id or game.player_two_id):
             response = {"game": "Authorization denied"}
             return make_response(jsonify(response), 201)
-        
-        fen = game.fen    
+
+        fen = game.fen
         board = chess.Board()
         board.set_fen(fen)
 
@@ -75,7 +84,7 @@ def init_routes(app):
                 return make_response(jsonify(response), 201)
             response = {"move": "Successfully reversed"}
             return make_response(jsonify(response), 200)
-        
+
         if move:
             game.add_move(board.san(chess.Move.from_uci(move)))
             print(board.san(chess.Move.from_uci(move)))
@@ -87,9 +96,9 @@ def init_routes(app):
                     game.update_fen(fen)
 
                     if board.is_game_over():
-                        if board.result() == '1-0':
+                        if board.result() == "1-0":
                             result = "WHITE WON"
-                        elif board.result() == '0-1':
+                        elif board.result() == "0-1":
                             result = "BLACK WON"
                         else:
                             result = "DRAW"
@@ -104,19 +113,21 @@ def init_routes(app):
                     return make_response(jsonify(response), 201)
                 response = {"move": "legal"}
                 return make_response(jsonify(response), 200)
-        
+
         response = {"FEN": fen}
         return make_response(jsonify(response), 203)
 
-    @app.route("/game_noauth", methods=["POST", "GET"]) # validate and save game for not-auth user
+    @app.route(
+        "/api/game_noauth", methods=["POST", "GET"]
+    )  # validate and save game for not-auth user
     def game_noauth():
         data = request.get_json()
-        fen = data.get("fen")   
+        fen = data.get("fen")
         board = chess.Board()
         board.set_fen(fen)
 
         data = request.get_json()
-        move = data.get("move") # in uci
+        move = data.get("move")  # in uci
         reverse = data.get("reverse")
         moveObj = chess.Move.from_uci(move)
 
@@ -129,7 +140,7 @@ def init_routes(app):
                 return make_response(jsonify(response), 201)
             response = {"move": "reversed", "fen": fen}
             return make_response(jsonify(response), 200)
-        
+
         elif moveObj in board.legal_moves:
             try:
                 board.push(board.parse_uci(move))
@@ -137,31 +148,33 @@ def init_routes(app):
             except ValueError:
                 response = {"move": "illegal", "fen": fen}
                 return make_response(jsonify(response), 201)
-            response = {"move":"legal", "fen": fen}
+            response = {"move": "legal", "fen": fen}
             return make_response(jsonify(response), 200)
-        
+
         response = {"fen": fen}
         return make_response(jsonify(response), 203)
-        
-    @app.route("/profile/games", methods=["GET"]) # show player's previous and ongoing games
+
+    @app.route(
+        "/api/profile/games", methods=["GET"]
+    )  # show player's previous and ongoing games
     @jwt_required()
     def mygames():
         current_user = get_jwt_identity()
-        games = Game.query.filter_by(player_one_id=current_user).all() # W
-        games2 = Game.query.filter_by(player_two_id=current_user).all() # B
+        games = Game.query.filter_by(player_one_id=current_user).all()  # W
+        games2 = Game.query.filter_by(player_two_id=current_user).all()  # B
         games += games2
         games_dict = [game.to_dict() for game in games]
         response = {"games": games_dict}
         return make_response(jsonify(response), 200)
 
-    @app.route("/loggedhome", methods=["GET", "POST"])
+    @app.route("/api/loggedhome", methods=["GET", "POST"])
     def home():
-        response = {"status":"ok"}
+        response = {"status": "ok"}
         return make_response(jsonify(response), 200)
 
-    @app.route("/registration", methods=["GET", "POST"])
+    @app.route("/api/registration", methods=["GET", "POST"])
     def registration():
-        if request.method == 'POST':
+        if request.method == "POST":
             data = request.get_json()
             username = data.get("username")
             email = data.get("email")
@@ -187,7 +200,9 @@ def init_routes(app):
                         response = {"registration": "Successfully registered"}
                         return make_response(jsonify(response), 200)
                     else:
-                        response = {"registration": "Ten email jest już przypisany do konta"}
+                        response = {
+                            "registration": "Ten email jest już przypisany do konta"
+                        }
                         return make_response(jsonify(response), 202)
                 else:
                     response = {"registration": "Account already exists."}
@@ -199,7 +214,7 @@ def init_routes(app):
             response = {"registration": "Use POST method"}
             return make_response(jsonify(response), 200)
 
-    @app.route("/login", methods=["POST"])
+    @app.route("/api/login", methods=["POST"])
     def login():
         data = request.get_json()
         username = data.get("username")
@@ -218,43 +233,41 @@ def init_routes(app):
         if account.check_password(password):
             access_token = create_access_token(identity=account.id)
             refresh_token = create_refresh_token(identity=account.id)
-            response = jsonify(
-                access_token=access_token, refresh_token=refresh_token
-            )
+            response = jsonify(access_token=access_token, refresh_token=refresh_token)
             response = jsonify({"login": "Successful"})
             set_access_cookies(response, access_token)
             set_refresh_cookies(response, refresh_token)
-                
+
             return make_response(response, 200)
 
         response = {"login": "Incorrect Password"}
         return make_response(jsonify(response), 201)
 
-    @app.route("/logout", methods=["POST"])
+    @app.route("/api/logout", methods=["POST"])
     def logout():
         response = jsonify({"logout": "Successful"})
         unset_jwt_cookies(response)
         return make_response(response, 200)
 
-    @app.route("/profile", methods=["GET"])
+    @app.route("/api/profile", methods=["GET"])
     @jwt_required()
     def show_account():
         current_user = get_jwt_identity()
         account = Account.query.get(current_user)
-        
+
         if not account:
             response = {"profile": "Account does not exist"}
             return make_response(jsonify(response), 404)
 
         response = {
-                    "id": account.id,
-                    "email": account.email,
-                    "username": account.username,
-                    "created_on": account.created_on,
-                    }
+            "id": account.id,
+            "email": account.email,
+            "username": account.username,
+            "created_on": account.created_on,
+        }
         return make_response(jsonify(response), 200)
 
-    @app.route("/profile/update", methods=["GET", "POST"])
+    @app.route("/api/profile/update", methods=["GET", "POST"])
     @jwt_required()
     @cross_origin(supports_credentials=True)
     def edit_account():
@@ -276,7 +289,9 @@ def init_routes(app):
 
             if account.check_password(password):
                 if new_username != "":
-                    username_exists = Account.query.filter_by(username=new_username).first()
+                    username_exists = Account.query.filter_by(
+                        username=new_username
+                    ).first()
                     if not username_exists:
                         account.update_username(new_username)
                     else:
@@ -299,10 +314,14 @@ def init_routes(app):
             return make_response(jsonify(response), 201)
 
         else:
-            response = {"id": account.id, "email": account.email, "username": account.username}
+            response = {
+                "id": account.id,
+                "email": account.email,
+                "username": account.username,
+            }
             return make_response(jsonify(response), 200)
 
-    @app.route("/profile/delete", methods=["DELETE"])
+    @app.route("/api/profile/delete", methods=["DELETE"])
     @jwt_required()
     @cross_origin(supports_credentials=True)
     def delete_account():
@@ -318,16 +337,16 @@ def init_routes(app):
         response = {"delete": "Account successfully deleted"}
         return make_response(jsonify(response), 200)
 
-    @app.route("/refresh", methods=["POST"])
+    @app.route("/api/refresh", methods=["POST"])
     @jwt_required(refresh=True)
     def refresh():
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user)
-        response = jsonify({'refresh': True})
+        response = jsonify({"refresh": True})
         set_access_cookies(response, access_token)
         return make_response(response, 200)
 
-    @app.route("/reset_send_email", methods=["GET", "POST"])
+    @app.route("/api/reset_send_email", methods=["GET", "POST"])
     def reset():
         try:
             data = request.get_json()
@@ -356,7 +375,7 @@ def init_routes(app):
                             <p>Drogi Użytkowniku {{ account }},</p>
                             <p>Dostaliśmy zapytanie o reset hasła. Jeśli nie jesteś właścicielem konta, zignoruj ten email.</p>
                             <p>Żeby zresetować hasło kliknij w poniższy link:</p>
-                            <p><a href="http://localhost:3000/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
+                            <p><a href="http://uwmchess.herokuapp.com/api/reset_password?token={{token}}&email={{email}}">Resetuj Hasło</a></p>
                             <p>have fun baby,</p>
                             <p>The Szaszki Team</p>
                         </body>
@@ -364,7 +383,7 @@ def init_routes(app):
                     """,
                     account=account.username,
                     token=reset_token,
-                    email=email
+                    email=email,
                 )
                 mail.send(msg)
             response = {"email": "Email has been sent"}
@@ -374,7 +393,7 @@ def init_routes(app):
             response = {"email": "Could not send email", "exception": f"{str(e)}"}
             return make_response(jsonify(response), 201)
 
-    @app.route("/reset_password", methods=["GET", "POST"])
+    @app.route("/api/reset_password", methods=["GET", "POST"])
     @cross_origin()
     def reset_password():
         token = None
@@ -387,9 +406,9 @@ def init_routes(app):
 
         if request.method == "POST":
             data = request.get_json()
-            token = data.get('token')
-            email = data.get('email')
-            
+            token = data.get("token")
+            email = data.get("email")
+
             reset_token = ResetToken.query.filter_by(token=token).first()
 
             expiration_time = timedelta(hours=1)
@@ -400,12 +419,12 @@ def init_routes(app):
             else:
                 response = {"reset": "Access to reset link has expired"}
                 return make_response(jsonify(response), 201)
-            
+
             if current_time - reset_token.created_at > expiration_time:
                 reset_token.delete()
                 response = {"reset": "Reset token has expired"}
                 return make_response(jsonify(response), 201)
-            
+
             account = Account.query.filter_by(email=email).first()
             if not account:
                 response = {"reset": "User does not exist"}
@@ -432,7 +451,7 @@ def init_routes(app):
                 response = {"reset": "Passwords do not match"}
                 return make_response(jsonify(response), 201)
 
-    @app.route("/check_auth", methods=["GET"])
+    @app.route("/api/check_auth", methods=["GET"])
     @jwt_required()
     def checking():
         response = {"auth": True}

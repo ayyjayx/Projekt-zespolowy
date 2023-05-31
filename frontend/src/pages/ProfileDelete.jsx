@@ -25,13 +25,13 @@ function ProfileDelete() {
         //     password: password
         // }
 
-        axios.delete("http://localhost:5000/profile/delete", {
+        axios.delete("http://uwmchess.herokuapp.com/api/profile/delete", {
             headers: {
                 "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`
             }
         }).then(response => {
             if (response.status === 200) {
-                axios.post("http://localhost:5000/logout")
+                axios.post("http://uwmchess.herokuapp.com/api/logout")
                     .then(response => {
                         console.log(response)
                     }).catch(err => console.log(err));

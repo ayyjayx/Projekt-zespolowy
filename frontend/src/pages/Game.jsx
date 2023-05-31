@@ -1,4 +1,4 @@
-import React, { useEffect, board } from 'react';
+import React, { useEffect } from 'react';
 import 'chessboard-element';
 import { useParams } from 'react-router-dom';
 import './style.css';
@@ -18,11 +18,11 @@ function Game() {
     // hasJWT() ? '' : window.location.href = '/home';
     const { gameId } = useParams();
     useEffect(() => {
-        if (!board) return;
-        board.pieceTheme = (piece) => {
+        if (!React.board) return;
+        React.board.pieceTheme = (piece) => {
             return images[`${piece}.svg`];
         }
-    }, [board])
+    }, [React.board])
 
 
     onlyAllowLegalMoves(gameId);
@@ -38,7 +38,7 @@ function Game() {
                 ref={(e) => React.board = e}
             >
             </chess-board>
-            <button onClick={() => board.flip()}>Flip Board</button>
+            <button onClick={() => React.board.flip()}>Flip Board</button>
         </div>
     );
 }
