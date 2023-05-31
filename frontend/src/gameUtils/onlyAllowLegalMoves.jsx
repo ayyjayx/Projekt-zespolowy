@@ -90,7 +90,7 @@ export function onlyAllowLegalMoves(gameId) {
                 }
 
                 if (game.isGameOver()) {
-                    socket.emit("game_pvp", { 'room': gameId, 'move': '' })
+                    socket.emit("game_pvp", { 'room': gameId, 'move': move.lan })
                     socket.on("response", (response) => {
                         console.log('gameover' + response);
                     })
