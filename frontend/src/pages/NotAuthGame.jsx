@@ -1,4 +1,4 @@
-import React, { useEffect, board } from 'react';
+import React, { useEffect } from 'react';
 import 'chessboard-element';
 import './style.css';
 import { noAuthOnlyAllowLegalMoves } from '../gameUtils/noAuthOnlyAllowLegalMoves';
@@ -16,11 +16,11 @@ function NotAuthGame() {
     noAuthOnlyAllowLegalMoves();
 
     useEffect(() => {
-        if (!board) return;
-        board.pieceTheme = (piece) => {
+        if (!React.board) return;
+        React.board.pieceTheme = (piece) => {
             return images[`${piece}.svg`];
         }
-    }, [board])
+    }, [React.board])
 
     return (
         <div className='center'>

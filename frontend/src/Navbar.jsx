@@ -13,7 +13,7 @@ axios.defaults.withCredentials = true;
 let isLoggedIn;
 
 function LogOut() {
-    axios.post("http://localhost:5000/logout")
+    axios.post("http://uwmchess.herokuapp.com/api/logout")
         .then(response => {
             console.log(response)
         }).catch(err => console.log(err));
