@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 // import Cookies from 'universal-cookie';
 
 // const cookies = new Cookies();
-const socket = io("http://uwmchess.herokuapp.com/api");
+const socket = io("http://localhost:5000");
 
 function LoggedHome() {
 
@@ -18,7 +18,7 @@ function LoggedHome() {
     const [gameId, setGameId] = useState();
 
     useEffect(() => { // te dwa sockety to chyba jakoś razem, albo odwrotnie
-        axios.get("http://uwmchess.herokuapp.com/api/get_player", {
+        axios.get("http://localhost:5000/get_player", {
             withCredentials: true
         },
             {

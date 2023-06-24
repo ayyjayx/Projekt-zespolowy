@@ -9,7 +9,7 @@ function Profile() {
     const [account, setAccount] = useState('');
 
     useEffect(() => {
-        axios.get("http://uwmchess.herokuapp.com/api/profile", {
+        axios.get("http://localhost:5000/profile", {
             withCredentials: true
         },
             {

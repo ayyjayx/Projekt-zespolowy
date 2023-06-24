@@ -11,7 +11,7 @@ function MyGames() {
     const [games, setGames] = useState([]);
 
     useEffect(() => {
-        axios.get("http://uwmchess.herokuapp.com/api/profile", {
+        axios.get("http://localhost:5000/profile", {
             withCredentials: true,
             headers: {
                     "Content-Type": "application/json",
@@ -28,7 +28,7 @@ function MyGames() {
         []);
     
     useEffect(() => {
-        axios.get("http://uwmchess.herokuapp.com/api/profile/games", {
+        axios.get("http://localhost:5000/profile/games", {
             withCredentials: true,
             headers: {
                     "Content-Type": "application/json",

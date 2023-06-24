@@ -16,7 +16,7 @@ function ResetEmail() {
             email: email
         }
 
-        axios.post("http://uwmchess.herokuapp.com/api/reset_send_email", registerPayload, {
+        axios.post("http://localhost:5000/reset_send_email", registerPayload, {
             headers: {
                 "Content-Type": "application/json"
             },

@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 
 const game = new Chess();
 // let socket;
-const socket = io("http://uwmchess.herokuapp.com/api");
+const socket = io("http://localhost:5000");
 
 export function getFenPosition(gameId) {
     const [position, setPosition] = useState(null);
@@ -16,7 +16,7 @@ export function getFenPosition(gameId) {
     const [playerId, setPlayerId] = useState(null);
 
     useEffect(() => { // te dwa sockety to chyba jakoś razem, albo odwrotnie
-        axios.get("http://uwmchess.herokuapp.com/api/get_player", {
+        axios.get("http://localhost:5000/get_player", {
             withCredentials: true
         },
             {

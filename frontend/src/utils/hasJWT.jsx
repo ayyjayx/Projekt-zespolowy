@@ -8,7 +8,7 @@ export function hasJWT() {
     const cookies = new Cookies();
     const [hasAuth, setHasAuth] = useState();
     useEffect(() => {
-        axios.get("http://uwmchess.herokuapp.com/api/check_auth",
+        axios.get("http://localhost:5000/check_auth",
             {
                 withCredentials: true
             })
@@ -21,7 +21,7 @@ export function hasJWT() {
                 console.log(err);
                 if (err.response.data.msg == "Token has expired") {
                     try {
-                        axios.post("http://uwmchess.herokuapp.com/api/refresh",
+                        axios.post("http://localhost:5000/refresh",
                             {
                                 withCredentials: true,
                             },

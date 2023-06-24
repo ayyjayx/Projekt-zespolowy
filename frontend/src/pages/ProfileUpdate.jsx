@@ -21,7 +21,7 @@ function ProfileUpdate() {
     axios.defaults.withCredentials = true;
 
     useEffect(() => {
-        axios.get("http://uwmchess.herokuapp.com/api/profile",
+        axios.get("http://localhost:5000/profile",
             {
                 withCredentials: true
             }, {
@@ -45,7 +45,7 @@ function ProfileUpdate() {
             password: password
         }
 
-        axios.post("http://uwmchess.herokuapp.com/api/profile/update", updatePayload, {
+        axios.post("http://localhost:5000/profile/update", updatePayload, {
             headers: {
                 "X-CSRF-TOKEN": `${cookies.get("csrf_access_token")}`,
             },
